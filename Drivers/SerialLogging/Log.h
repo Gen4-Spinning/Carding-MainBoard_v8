@@ -57,7 +57,7 @@ void Log_disableLogging(Log *l);
 void Log_DoOneCycle(void);
 void Log_ResetRunTimeRdngNos(void);
 uint8_t Log_addSettingsDataToBuffer(machineSettingsTypeDef *m,uint16_t bufferLocation);
-uint8_t Log_addSensorDebugDataToBuffer(SensorTypeDef *s,uint16_t bufferLocation);
+//uint8_t Log_addSensorDebugDataToBuffer(SensorTypeDef *s,uint16_t bufferLocation);
 void Log_ResetBufferIndex(Log *l);
 
 #endif /* LOG_H_ */

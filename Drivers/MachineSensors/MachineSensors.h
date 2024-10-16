@@ -18,43 +18,33 @@
 
 #define DUCT_SENSOR_OPEN 1
 #define DUCT_SENSOR_CLOSED 0
+#define DUCT_SENSOR_RESET 2
 
-#define START_BTR_FEED 1
-#define STOP_BTR_FEED 2
-#define NOTHING_BUFFERED_BTR_FEED 0
+#define DUCT_OPEN 1
+#define DUCT_CLOSED 2
 
+#define DUCT_LEVEL_LOW 1
+#define DUCT_LEVEL_CORRECT 2
+#define DUCT_LEVEL_HIGH 3
 
-#define SENSOR_ENABLE 1
-#define SENSOR_DISABLE 2
-
-typedef struct {
-	int8_t ductSensor;
-	int8_t ductCurrentState;
+typedef struct SensorTypeDef{
+	int8_t currentReading;
+	int8_t presentState;
 	uint8_t ductTimerIncrementBool;
 	uint8_t ductSensorTimer;
 	uint8_t ductStateChanged;
+	uint16_t hysteresisTime;
+} Sensor;
 
-	uint8_t updateBtnPressed;
-	uint8_t ductSensorDbgTimer;
+extern Sensor ductCardFeedTop;
+extern Sensor ductCardFeedBtm;
+extern Sensor ductAutoFeed;
 
-	uint8_t coilerSensor_activated;
-	uint8_t coilerSensor;
-	uint8_t latchedCoilerSensor;
-
-} SensorTypeDef;
-
-extern SensorTypeDef sensor;
-
-uint8_t Sensor_whichTriggered(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *whichSensor);
-void Sensor_resetTriggeredStates(MCP23017_PortB *whichSensor);
-int8_t Sensor_GetTriggerValue(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sensorVal,uint8_t sensor);
-
-void SetCoilerSensorState(SensorTypeDef *s,uint8_t state);
-
-void DuctSensorMonitor(SensorTypeDef *s,machineSettingsTypeDef *msp);
-uint8_t DuctSensor_CompareDuctStateWithBeaterFeedState(SensorTypeDef *s,RunTime_TypeDef *btrFeedData);
 
 int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sensorVal,uint8_t sensor);
-uint8_t SensorAppyHysteresis(SensorTypeDef *s,int8_t sensorCurrentReading);
+uint8_t SensorAppyHysteresis(Sensor *s);
+
+void setupSensorHysteresisTime(Sensor *s , uint16_t delayTime);
+void processCardFeedDuctLevel(CardingMc *c);
 
 #endif /* MACHINESENSORS_H_ */

@@ -16,10 +16,11 @@ void ReadUserSettingsFromEeprom(userSettings *u){
 	u->cardCylRPM = EE_ReadInteger(C_CARDING_CYL_SPEED_ADDR);
 	u->btrCylRPM = EE_ReadInteger(C_BEATER_CYL_SPEED_ADDR);
 	u->pickerCylRPM = EE_ReadInteger(C_PICKER_CYL_SPEED_ADDR);
+	u->btrFeedRPM =  EE_ReadFloat(C_BTRFEED_SPEED_ADDR);
+	u->AF_FeedRPM =  EE_ReadFloat(C_AFFEED_SPEED_ADDR);
 	//transferRatios
 	u->deliveryMtrMin_CardFeed_Ratio =  EE_ReadFloat(C_DELIVERY_CARDFEED_RATIO_ADDR);
-	u->btrFeed_CardFeed_Ratio =  EE_ReadFloat(C_BTRFEED_CARDFEED_RATIO_ADDR);
-	u->afFeed_BtrFeed_Ratio =  EE_ReadFloat(C_AFFEED_BTRFEED_RATIO_ADDR);
+
 }
 
 uint8_t CheckUserSettings(userSettings* u){
@@ -42,10 +43,10 @@ uint8_t CheckUserSettings(userSettings* u){
 	if ((u->deliveryMtrMin_CardFeed_Ratio > 3.0f) || (u->deliveryMtrMin_CardFeed_Ratio < 10.0f)){
 			return 0;
 	}
-	if ((u->btrFeed_CardFeed_Ratio > 0.2f) || (u->btrFeed_CardFeed_Ratio < 2.0)){
+	if ((u->btrFeedRPM > 11.0f) || (u->btrFeedRPM < 1.0f)){
 			return 0;
 	}
-	if ((u->afFeed_BtrFeed_Ratio > 0.2f) || (u->afFeed_BtrFeed_Ratio < 2.0f)){
+	if ((u->AF_FeedRPM > 8.0f) || (u->AF_FeedRPM < 1.0f)){
 			return 0;
 	}
 	return 1;
@@ -60,8 +61,8 @@ void LoadDefaultUserSettings(userSettings *u){
 	u->btrCylRPM = DEFAULT_BEATER_CYL_SPEED;
 	u->pickerCylRPM = DEFAULT_PICKER_CYL_SPEED;
 	u->deliveryMtrMin_CardFeed_Ratio = DEFAULT_DELIVERY_CARDFEED_RATIO;
-	u->btrFeed_CardFeed_Ratio = DEFAULT_BTRFEED_CARDFEED_RATIO;
-	u->afFeed_BtrFeed_Ratio = DEFAULT_AFFEED_BTRFEED_RATIO;
+	u->btrFeedRPM = DEFAULT_BTRFEED_SPEED;
+	u->AF_FeedRPM = DEFAULT_AFFEED_SPEED;
 }
 
 
@@ -77,11 +78,11 @@ uint8_t WriteUserSettingsIntoEeprom(userSettings *u){
     HAL_Delay(2);
     dataWritten += EE_WriteInteger(u->pickerCylRPM,C_PICKER_CYL_SPEED_ADDR);
     HAL_Delay(2);
+    dataWritten += EE_WriteInteger(u->btrFeedRPM,C_BTRFEED_SPEED_ADDR);
+    HAL_Delay(2);
+    dataWritten += EE_WriteInteger(u->AF_FeedRPM,C_AFFEED_SPEED_ADDR);
+    HAL_Delay(2);
     dataWritten += EE_WriteFloat(u->deliveryMtrMin_CardFeed_Ratio,C_DELIVERY_CARDFEED_RATIO_ADDR);
-    HAL_Delay(2);
-    dataWritten += EE_WriteFloat(u->btrFeed_CardFeed_Ratio,C_BTRFEED_CARDFEED_RATIO_ADDR);
-    HAL_Delay(2);
-    dataWritten += EE_WriteFloat(u->afFeed_BtrFeed_Ratio,C_AFFEED_BTRFEED_RATIO_ADDR);
     HAL_Delay(2);
     if (dataWritten == 8)
     	{return 0;}

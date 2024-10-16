@@ -91,6 +91,9 @@ machineSettingsTypeDef msp;
 userSettings u;
 internalSettings I;
 CardingMc C;
+Sensor ductCardFeedTop;
+Sensor ductCardFeedBtm;
+Sensor ductAutoFeed;
 
 
 machineSettingsTypeDef ps; // piecing settings
@@ -117,7 +120,6 @@ MCP23017_PortB mcp_portB;
 MCP23017_PortB mcp_portB_whichSensor;
 MCP23017_PortB mcp_portB_sensorVal;
 MCP23017_PortA mcp_portA; // for AC SSR
-SensorTypeDef sensor;
 Log L;
 TDP tdp;
 
@@ -198,7 +200,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	  if (timer7Count % 5 == 0){
 		  S.BT_sendState = 1;
 		  S.TD_POT_check = 1;
-		  if (S.runMode== RUN_ALL){
+		  if (S.runMode== RUN_CARDING_SECTION){
 			  mcParams.currentMtrsRun += msp.delivery_mMin/60.0 * 0.5;
 		  }
 	  }
@@ -210,8 +212,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  if(DR.requestSent){
 			  DR.timer++;
 		  }
-		  if (sensor.ductTimerIncrementBool){
-			  sensor.ductSensorTimer++;
+		  if (ductCardFeedTop.ductTimerIncrementBool){
+			  ductCardFeedTop.ductSensorTimer++;
+		  }
+		  if (ductCardFeedBtm.ductTimerIncrementBool){
+			  ductCardFeedBtm.ductSensorTimer++;
+		  }
+		  if (ductAutoFeed.ductTimerIncrementBool){
+			  ductAutoFeed.ductSensorTimer++;
 		  }
 	  }
   }
@@ -323,6 +331,7 @@ int main(void)
   InitializeDiagnostic_TypeDef(&D);
   InitializeMotherBoardErrors_TypeDef(&MBE);//Todo : cleanup
   InitializeBTMsg_TypeDef(&BT);
+  InitInternalSettings(&I);
 
   //now setup the Machine Settings
   ReadUserSettingsFromEeprom(&u);
@@ -368,9 +377,28 @@ int main(void)
 	  }
   }
 
-  //at startup make both duct sensor states, instantaneous and current open
-  //sensor.ductSensor = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCT_SENSOR);
-  //sensor.ductCurrentState = sensor.ductSensor ;
+  //at startup set the hysteresis times for each sensor and then set the current state for the sensors and for the duct also
+  setupSensorHysteresisTime(&ductCardFeedTop,I.cardingDuctSensorTopDelay);
+  ductCardFeedTop.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
+  ductCardFeedTop.presentState = ductCardFeedTop.currentReading ;
+  C.D.cardFeedTop_sensorState = ductCardFeedTop.presentState;
+
+  setupSensorHysteresisTime(&ductCardFeedBtm,I.cardingDuctSensorBtmDelay);
+  ductCardFeedBtm.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_BTM_CARDFEED);
+  ductCardFeedBtm.presentState = ductCardFeedBtm.currentReading ;
+  C.D.cardFeedBtm_sensorState = ductCardFeedBtm.presentState;
+
+  processCardFeedDuctLevel(&C); //set the duct state
+  C.D.cardFeed_ductState_current = DUCT_SENSOR_RESET;
+
+  setupSensorHysteresisTime(&ductAutoFeed,I.AF_ductSensorDelay);
+  ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
+  ductAutoFeed.presentState = ductAutoFeed.currentReading ;
+  C.D.autoFeed_sensorState = ductAutoFeed.presentState;
+  C.D.autoFeed_ductState_current = DUCT_SENSOR_RESET;
+
+
+  //------ Done ---
 
   //set AC ssr Off
   setSSR_State(AC_SSR_OFF,&hmcp, &mcp_portA);

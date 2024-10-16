@@ -17,7 +17,7 @@
 
 #define RUN_RAMPUP 1
 #define RUN_FILL_DUCT 2
-#define RUN_ALL 3
+#define RUN_CARDING_SECTION 3
 #define RUN_PAUSED	4
 #define RUN_STOPPED 5
 #define RUN_OVER 6
@@ -45,10 +45,6 @@ typedef struct StateStruct
 	char settingsModified;
 
 	char piecingMode;
-	char piecingModeOneShot;
-
-	char btrFeed_nonDuct_signal;
-	char btrFeed_Duct_signal;
 
 	long oneSecTimer;
 	char BT_sendState;

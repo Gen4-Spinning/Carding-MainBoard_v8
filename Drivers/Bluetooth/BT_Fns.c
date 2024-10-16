@@ -331,11 +331,11 @@ uint8_t BT_MC_generateStatusMsg(uint8_t state){
 		  add_TLVBuf_To_TxBuf(TLV_Buffer,TLC_C,initLength+tlvSize);
 		  tlvSize += TLC_C;
 
-		  generateTLV_F(TLV_Buffer,RUN_CARDING_DLVRY_MTR_MIN,msp.delivery_mMin);
+		  generateTLV_F(TLV_Buffer,RUN_CARDING_DLVRY_MTR_MIN,C.cardingDelivery_mtrMin);
 		  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_FLOAT,initLength+tlvSize);
 		  tlvSize += TLV_FLOAT;
 
-		  generateTLV_I(TLV_Buffer,RUN_DUCT_SENSOR,sensor.ductCurrentState);
+		  generateTLV_I(TLV_Buffer,RUN_DUCT_SENSOR,C.D.cardFeed_ductState_current);
 		  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 		  tlvSize += TLV_INT;
 

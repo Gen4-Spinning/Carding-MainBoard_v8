@@ -23,11 +23,10 @@ uint8_t Log_addSettingsDataToBuffer(machineSettingsTypeDef *m,uint16_t bufferLoc
 	sprintf(LogBuffer + bufferLocation,"S,%05.02f,%05.02f,%04d,%04d,%05.02f,%05.02f,%04d,%02d,%02d,E\r\n",m->delivery_mMin,m->draft,m->cylinderSpeed,m->beaterSpeed,m->cylinderFeed,m->beaterFeed,m->lengthLimit,m->trunkDelay,m->rampTimes);
 	return PACKET_SIZE_SETTINGS;
 }
-
-uint8_t Log_StateChangeDataToBuffer(StateTypeDef *s,uint16_t bufferLocation){
+/*uint8_t Log_StateChangeDataToBuffer(StateTypeDef *s,uint16_t bufferLocation){
 	sprintf(LogBuffer + bufferLocation,"R,%01d,%01d,%01d,%01d,%01d,%03.02f,E\r\n",s->current_state,s->runMode,s->piecingMode,sensor.ductCurrentState,s->BT_pauseReason,tdp.tensionDraft);
 	return PACKET_SIZE_RUNSTATE;
-}
+}*/
 
 //this assumes atleast one motor is setup for logging.
 uint8_t Log_changeLoggingMotor(Log *l){
@@ -79,7 +78,7 @@ void Log_DoOneCycle(void){
 		if ((BUFFER_LOG_SIZE - L.bufferIdx) > PACKET_SIZE_MINIMUM){
 
 			if (L.logRunStateChange == 1){
-				L.bufferIdx  += Log_StateChangeDataToBuffer(&S,L.bufferIdx);
+				L.bufferIdx  += 2;//Log_StateChangeDataToBuffer(&S,L.bufferIdx);
 				L.logRunStateChange = 0;
 			}
 			else if (L.logSettings == 1){

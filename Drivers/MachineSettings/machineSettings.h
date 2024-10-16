@@ -69,9 +69,7 @@ typedef struct motorRPMsType{
 
 
 typedef struct liveValuesType{
-	uint16_t state_ductSensor_autoFeed;
-	uint16_t state_ductSensor_cardFeedTop;
-	uint16_t state_ductSensor_cardFeedBtm;
+
 	uint8_t pickerFeedOn;
 	uint8_t btrFeedOn;
 
@@ -92,30 +90,40 @@ typedef struct userSettingsType{
 	uint16_t cardCylRPM;
 	uint16_t btrCylRPM;
 	uint16_t pickerCylRPM;
+	uint16_t btrFeedRPM;
+	uint16_t AF_FeedRPM;
 
 	float deliveryMtrMin_CardFeed_Ratio;
-	float btrFeed_CardFeed_Ratio;
-	float afFeed_BtrFeed_Ratio;
 
 }userSettings;
 
 typedef struct internalSettingsType{
 	uint16_t AF_ductSensorDelay;
-	uint16_t cardingDuctSensor1Delay;
-	uint16_t cardingDuctSensor2Delay;
+	uint16_t cardingDuctSensorTopDelay;
+	uint16_t cardingDuctSensorBtmDelay;
 	uint16_t piecingDeliveryMtrsMin;
-	uint16_t ductFillDeliveryMtrsMin;
 }internalSettings;
 
+typedef struct DuctType{
+	uint16_t autoFeed_sensorState;
+	uint16_t cardFeedTop_sensorState;
+	uint16_t cardFeedBtm_sensorState;
+	uint8_t cardFeed_ductLevel;
+
+	uint8_t cardFeed_ductState_current;
+	uint8_t autoFeed_ductState_current;
+}ducts;
 
 typedef struct cardingMC_Full{
-	float delivery_mtrMin;
+	float cardingDelivery_mtrMin;
+	float feedsDeliveryMtrMin;
 	float lengthLimit;
 	float tensionDraft;
 	uint8_t machineState;
 
 	motorRPMS M;
 	rollerRPMs R;
+	ducts D;
 	liveValues L;
 
 }CardingMc;
@@ -171,10 +179,10 @@ void LoadDefaultUserSettings(userSettings *u);
 void InitInternalSettings(internalSettings *i);
 void setupCardingMCType(CardingMc *c,userSettings *u);
 uint8_t CheckCylindersRampUpOver(CardingMc *c,ExtendedRunTime_TypeDef *cylinder,ExtendedRunTime_TypeDef *beater,RunTime_TypeDef *pickerCylinder);
-void updateMachineSpeeds(CardingMc *c,userSettings *u,float deliveryMtrMin,uint8_t updateOnlyCardFeed);
+void updateCardingSectionSpeeds(CardingMc *c,userSettings *u);
 
 //coiler and potentiometer related functions
-void updateCoilerParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m);
+//void updateCoilerParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m);
 uint16_t calcBaseCoilerRPM(userSettings *u);
 
 uint8_t getMotorCANAddress(uint8_t motor);

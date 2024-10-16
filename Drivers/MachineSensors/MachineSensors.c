@@ -7,69 +7,12 @@
 
 
 #include "MachineSensors.h"
+#include "machineSettings.h"
 
-/*uint8_t Sensor_whichTriggered(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *whichSensor){
-	mcp23017_read(mcp, INTFB,mcp->intTrigger);// intFB gives which pin has interrupt
-	whichSensor->raw = mcp->intTrigger[0];
-	if (whichSensor->values.input0 == 1){ // input 0 is duct sensor
-		return DUCT_SENSOR;
-	}
-	return UNKNOWN_SENSOR;
+
+void setupSensorHysteresisTime(Sensor *s , uint16_t delayTime){
+	s->hysteresisTime = delayTime;
 }
-
-void Sensor_resetTriggeredStates(MCP23017_PortB *whichSensor){
-	whichSensor->raw = 0 ;
-}
-
-int8_t Sensor_GetTriggerValue(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sensorVal,uint8_t sensor){
-	mcp23017_read(mcp, INTCAPB,mcp->intTriggerCapturedValue); // captures GPIO value when interrupt comes.
-	sensorVal->raw = mcp->intTriggerCapturedValue[0];
-	if (sensor == DUCT_SENSOR){
-		return sensorVal->values.input0;
-	}
-	return -1;
-}
-
-
-void SetCoilerSensorState(SensorTypeDef *s,uint8_t state){
-	s->coilerSensor_activated = state;
-}
-
-void DuctSensorMonitor(SensorTypeDef *s,machineSettingsTypeDef *msp){
-	if (s->ductSensor != s->ductCurrentState){
-			s->ductTimerIncrementBool = 1;
-			if (s->ductSensorTimer >= msp->trunkDelay){
-				s->ductCurrentState = s->ductSensor;
-				s->ductSensorTimer = 0;
-			}
-		}else{
-			s->ductSensorTimer = 0;
-			s->ductTimerIncrementBool = 0;
-		}
-}
-
-// check 2 seconds after a change in state.
-uint8_t DuctSensor_CompareDuctStateWithBeaterFeedState(SensorTypeDef *s,RunTime_TypeDef *btrFeedData){
-	if (s->ductCurrentState == DUCT_SENSOR_OPEN){
-		if (btrFeedData->pwm <= 100){
-			// means the btr FEED is not running.
-			return 0;
-		}else{
-			return 1;
-		}
-	}
-	if (s->ductCurrentState == DUCT_SENSOR_CLOSED){
-		if (btrFeedData->pwm >= 100){
-			// means the btr FEED is running.
-			return 0;
-		}else{
-			return 1;
-		}
-	}
-
-	return 1;
-}
-*/
 
 int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sensorVal,uint8_t sensor){
 	mcp23017_read(mcp, MCP_GPIOB,mcp->intTriggerCapturedValue); // captures GPIO value when interrupt comes.
@@ -85,15 +28,17 @@ int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sen
 }
 
 
-uint8_t SensorAppyHysteresis(SensorTypeDef *s,int8_t sensorCurrentReading){
-
+uint8_t SensorAppyHysteresis(Sensor *s){
 	// if sensor reading is different from the previous state.
-	if (sensorCurrentReading != s->ductCurrentState){
+	if (s->currentReading != s->presentState){
 		if (s->ductTimerIncrementBool == 0){
 			s->ductSensorTimer = 0;
 			s->ductTimerIncrementBool = 1;
 		}else{
-			if (s->ductSensorTimer >= msp.trunkDelay){
+			if (s->ductSensorTimer >= s->hysteresisTime ){
+				s->presentState = s->currentReading;
+				s->ductTimerIncrementBool = 0;
+				s->ductSensorTimer = 0;
 				return 1;		// apply the motor state and then reset these vars
 			}else{
 				return 0;
@@ -109,3 +54,16 @@ uint8_t SensorAppyHysteresis(SensorTypeDef *s,int8_t sensorCurrentReading){
 	return 0;
 }
 
+
+void processCardFeedDuctLevel(CardingMc *c){
+	if ((C.D.cardFeedTop_sensorState == DUCT_SENSOR_OPEN) && (C.D.cardFeedBtm_sensorState == DUCT_SENSOR_OPEN)){
+		c->D.cardFeed_ductLevel = DUCT_LEVEL_LOW;
+	}else if ((C.D.cardFeedTop_sensorState == DUCT_SENSOR_OPEN) && (C.D.cardFeedBtm_sensorState == DUCT_SENSOR_CLOSED)){
+		c->D.cardFeed_ductLevel = DUCT_LEVEL_CORRECT;
+	}else if ((C.D.cardFeedTop_sensorState == DUCT_SENSOR_CLOSED) && (C.D.cardFeedBtm_sensorState == DUCT_SENSOR_CLOSED)){
+		c->D.cardFeed_ductLevel = DUCT_LEVEL_HIGH;
+	}else{
+		//top closed but Btm open. MomentaryBlip while cotton is crossing or mistake. So we run fast
+		c->D.cardFeed_ductLevel = DUCT_LEVEL_LOW;
+	}
+}

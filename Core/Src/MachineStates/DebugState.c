@@ -185,7 +185,7 @@ void DebugState(void){
 		}
 
 		if (updateSettingsDbg){
-			updateMachineSpeeds(&C,&u,u.delivery_mMin,0);
+			//updateMachineSpeeds(&C,&u,u.delivery_mMin,0);
 			updateSettingsDbg =0;
 		}
 

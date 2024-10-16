@@ -24,4 +24,8 @@ uint8_t SendCommands_To_MultipleMotors(uint8_t *motorList,uint8_t motorArraySize
 uint8_t Send_DiagCommands_To_MultipleMotors(uint8_t *motorList,uint8_t motorArraySize,uint8_t command);
 uint8_t SendChangeTargetToMultipleMotors(uint8_t *motorList,uint8_t motorArraySize,uint16_t *changeTargets);
 
+uint16_t updateBeaterFeedMotorRPM_BasedOnDuctLevel(CardingMc *c);
+uint8_t sendCommandToBeaterFeedMotor(CardingMc *c);
+uint8_t sendStartStopToAutoFeedMotor(CardingMc *c,uint8_t state);
+
 #endif /* MOTORCOMMS_H_ */
