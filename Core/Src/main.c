@@ -248,9 +248,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 		  }
 		  else if (GPIO_Pin == YELLOW_Pin){
 			  usrBtns.yellowBtn = usrBtns.initialState;
-		  }else{
+		  }else if (GPIO_Pin == ROTARY_Pin){
 			  usrBtns.rotarySwitch = usrBtns.initialState;
-		  }
+		  }else{}
 	}
 }
 
@@ -287,7 +287,9 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+
+
+	HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -336,19 +338,18 @@ int main(void)
   //now setup the Machine Settings
   ReadUserSettingsFromEeprom(&u);
   MBE.EepromLoadValsGood = CheckUserSettings(&u);
+  //MBE.EepromLoadValsGood = 0;
   if (MBE.EepromLoadValsGood == 0){
 	  LoadDefaultUserSettings(&u);
 	  //manualWrite
-	  /*
-	  u.delivery_mMin = 10;
+	  /*u.delivery_mMin = 10;
 	  u.lengthLimit = 100;
 	  u.cardCylRPM = 750;
 	  u.btrCylRPM = 600;
-	  u.pickerCylRPM = 500;
-	  u.deliveryMtrMin_CardFeed_Ratio=5.0f;
-	  u.btrFeed_CardFeed_Ratio = 1.01;
-	  u.afFeed_BtrFeed_Ratio=1.02;
-	  */
+	  u.pickerCylRPM = 700;
+	  u.btrFeedRPM = 5.0f;
+	  u.AF_FeedRPM = 0.5f;
+	  u.deliveryMtrMin_CardFeed_Ratio=5.0f;*/
 	  MBE.defaults_eepromWriteFailed = WriteUserSettingsIntoEeprom(&u);
   }
   setupCardingMCType(&C,&u);
@@ -389,13 +390,13 @@ int main(void)
   C.D.cardFeedBtm_sensorState = ductCardFeedBtm.presentState;
 
   processCardFeedDuctLevel(&C); //set the duct state
-  C.D.cardFeed_ductState_current = DUCT_SENSOR_RESET;
+  C.D.cardFeed_ductState_current = DUCT_RESET;
 
   setupSensorHysteresisTime(&ductAutoFeed,I.AF_ductSensorDelay);
   ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
   ductAutoFeed.presentState = ductAutoFeed.currentReading ;
   C.D.autoFeed_sensorState = ductAutoFeed.presentState;
-  C.D.autoFeed_ductState_current = DUCT_SENSOR_RESET;
+  C.D.autoFeed_ductState_current = DUCT_RESET;
 
 
   //------ Done ---

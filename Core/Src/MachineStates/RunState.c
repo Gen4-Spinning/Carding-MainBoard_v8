@@ -62,14 +62,14 @@ void RunState(void){
 			C.D.cardFeedBtm_sensorState  = ductCardFeedBtm.presentState;
 			processCardFeedDuctLevel(&C);
 			if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
-				sendCommandToBeaterFeedMotor(&C);
+				sendCommandToBeaterFeedMotor(&C,&u);
 			}
 			ductCardFeedTop.ductStateChanged = 0;
 			ductCardFeedBtm.ductStateChanged = 0;
 		}
 
 		// check duct auto Feed Status. Status is set here, and used in the Run State blocks of code below.
-		ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
+		/*ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
 		ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
 		if (ductAutoFeed.ductStateChanged){
 			uint8_t autoFeedCommand = 0;
@@ -84,7 +84,7 @@ void RunState(void){
 				sendStartStopToAutoFeedMotor(&C,autoFeedCommand);
 			}
 			ductAutoFeed.ductStateChanged = 0;
-		}
+		}*/
 
 		/*----------------Ending Beater Feed and AF Feed Logic -----------------*/
 
@@ -110,17 +110,38 @@ void RunState(void){
 			}
 		}
 
+		if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
+			if ((usrBtns.rotarySwitch == ROTARY_SWITCH_ON)&&((C.D.autoFeed_ductState_current==DUCT_CLOSED)||(C.D.autoFeed_ductState_current==DUCT_RESET))){
+				C.D.autoFeed_ductState_current = DUCT_OPEN;
+				sendStartStopToAutoFeedMotor(&C,START);
+			}
+			if ((usrBtns.rotarySwitch == ROTARY_SWITCH_OFF)&&((C.D.autoFeed_ductState_current==DUCT_OPEN)||(C.D.autoFeed_ductState_current==DUCT_RESET))){
+				C.D.autoFeed_ductState_current = DUCT_CLOSED;
+				sendStartStopToAutoFeedMotor(&C,RAMPDOWN_STOP);
+			}
+		}
 
-		if (S.runMode == RUN_CARDING_SECTION){
-
-			if (updateSettings){
+		if (updateSettings){
+			if (S.runMode == RUN_CARDING_SECTION){ // later logic with puase/peicing
 				updateCardingSectionSpeeds(&C,&u);
 				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
 				uint16_t targets[] = {C.M.cardFeedMotorRPM,C.M.cageMotorRPM,C.M.coilerMotorRPM};
 				noOfMotors = 3;
 				SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
-				updateSettings = 0;
 			}
+			if ((S.runMode == RUN_CARDING_SECTION || S.runMode == RUN_FILL_DUCT)){
+				updateFeedSectionSpeeds(&C,&u);
+				ductCardFeedTop.presentState = DUCT_SENSOR_RESET; // resetting this state, forces the duct code to send a new command
+				ductCardFeedBtm.presentState = DUCT_SENSOR_RESET;
+			}
+
+			updateSettings = 0;
+		}
+
+
+	   if (S.runMode == RUN_CARDING_SECTION){
+			// TO DO: Pieceing, tension draft changing,in pause mode changing settings..
+
 
 			if (usrBtns.yellowBtn == BTN_PRESSED){
 				usrBtns.yellowBtn = BTN_IDLE;
@@ -134,7 +155,6 @@ void RunState(void){
 				S.runMode = RUN_PAUSED;
 				S.BT_pauseReason = BT_PAUSE_USER_PRESSED;
 			}
-
 		}
 
 		if (S.runMode == RUN_PAUSED){
@@ -157,6 +177,42 @@ void RunState(void){
 			C.L.mcPower = ER[0].power + ER[1].power + R[2].power + R[3].power + R[4].power + R[5].power + R[6].power+ R[7].power;
 			currentTime = S.oneSecTimer;
 		}
+
+		if (S.TD_POT_check == 1){ //500ms
+			TD_readADC(&tdp);
+			if (u.delivery_mMin != tdp.usedDeliveryM_min){
+				TD_calculateMaxDraft(&tdp,&u);
+				tdp.appliedLevel = 0; // force recalculation of td value when mtr/min changes
+			}
+			TD_calculate(&tdp);
+			if (tdp.tensionDraftChanged ==1){
+				C.tensionDraft = tdp.tensionDraft;
+				if ((S.runMode == RUN_CARDING_SECTION)&&(S.piecingMode == 0)){
+					updateCoilerParameters(&C, &u);
+					uint8_t motors[] = {COILER};
+					uint16_t targets[] = {C.M.coilerMotorRPM};
+					noOfMotors = 1;
+					SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
+				}
+				tdp.tensionDraftChanged  = 0;
+				//enable Beep Logic
+				tdp.beepEnable = 1;
+				tdp.beepCounter = 0;
+				TowerLamp_NegateState(&hmcp, &mcp_portB,TOWER_BUZZER);
+				TowerLamp_ApplyState(&hmcp,&mcp_portB);
+			}
+
+			if (tdp.beepEnable){
+				tdp.beepCounter ++;
+				if (tdp.beepCounter >2){
+					tdp.beepEnable = 0;
+					TowerLamp_NegateState(&hmcp, &mcp_portB,TOWER_BUZZER);
+					TowerLamp_ApplyState(&hmcp,&mcp_portB);
+				}
+			}
+			S.TD_POT_check = 0;
+		}
+
 
 		// stop btn
 		if (usrBtns.redBtn == BTN_PRESSED){

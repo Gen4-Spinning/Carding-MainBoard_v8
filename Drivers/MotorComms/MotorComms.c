@@ -287,25 +287,25 @@ uint8_t SendChangeTargetToMultipleMotors(uint8_t *motorList,uint8_t motorArraySi
 }
 
 
-uint16_t updateBeaterFeedMotorRPM_BasedOnDuctLevel(CardingMc *c){
+uint16_t updateBeaterFeedMotorRPM_BasedOnDuctLevel(CardingMc *c,uint16_t btrFeedRollerRPM){
 	if (c->D.cardFeed_ductLevel == DUCT_LEVEL_LOW){
-		c->R.btrFeedRPM = fmin(u.btrFeedRPM + 2.0f,11.0f);
+		c->R.btrFeedRPM = fmin(btrFeedRollerRPM + 2.0f,11.0f);
 	}else if (c->D.cardFeed_ductLevel == DUCT_LEVEL_CORRECT){
-		c->R.btrFeedRPM = u.btrFeedRPM;
+		c->R.btrFeedRPM = btrFeedRollerRPM;
 	}
 	c->M.btrFeedMotorRPM = c->R.btrFeedRPM * BEATER_FEED_GB;
 	return c->M.btrFeedMotorRPM;
 }
 
-uint8_t sendCommandToBeaterFeedMotor(CardingMc *c){
+uint8_t sendCommandToBeaterFeedMotor(CardingMc *c,userSettings *u){
 	uint16_t beaterMotorRPM=0;
 	uint8_t response = 9;
 	uint8_t motors[] = {BEATER_FEED};
 	uint8_t noOfMotors = 1;
 
-	if (c->D.cardFeed_ductState_current == DUCT_CLOSED){
+	if ((c->D.cardFeed_ductState_current == DUCT_CLOSED)||(c->D.cardFeed_ductState_current == DUCT_RESET)){
 		if (c->D.cardFeed_ductLevel != DUCT_LEVEL_HIGH){
-			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C);
+			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C,u->btrFeedRPM);
 			SU[BEATER_FEED].RPM = beaterMotorRPM;
 			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
 			c->D.cardFeed_ductState_current = DUCT_OPEN;
@@ -313,14 +313,14 @@ uint8_t sendCommandToBeaterFeedMotor(CardingMc *c){
 		}
 	}
 
-	else if (c->D.cardFeed_ductState_current == DUCT_OPEN){
+	else if ((c->D.cardFeed_ductState_current == DUCT_OPEN)||(c->D.cardFeed_ductState_current == DUCT_RESET)){
 		if (c->D.cardFeed_ductLevel == DUCT_LEVEL_HIGH){
 			response = SendCommands_To_MultipleMotors(motors,noOfMotors,RAMPDOWN_STOP);
 			c->D.cardFeed_ductState_current = DUCT_CLOSED;
 			return response;
 		}
 		else{
-			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C);
+			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C,u->btrFeedRPM);
 			uint16_t targets[] = {beaterMotorRPM};
 			response = SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
 			c->D.cardFeed_ductState_current = DUCT_OPEN;

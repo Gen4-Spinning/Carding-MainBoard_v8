@@ -22,6 +22,7 @@
 
 #define DUCT_OPEN 1
 #define DUCT_CLOSED 2
+#define DUCT_RESET 3
 
 #define DUCT_LEVEL_LOW 1
 #define DUCT_LEVEL_CORRECT 2

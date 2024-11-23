@@ -90,8 +90,8 @@ typedef struct userSettingsType{
 	uint16_t cardCylRPM;
 	uint16_t btrCylRPM;
 	uint16_t pickerCylRPM;
-	uint16_t btrFeedRPM;
-	uint16_t AF_FeedRPM;
+	float btrFeedRPM;
+	float AF_FeedRPM;
 
 	float deliveryMtrMin_CardFeed_Ratio;
 
@@ -116,7 +116,6 @@ typedef struct DuctType{
 
 typedef struct cardingMC_Full{
 	float cardingDelivery_mtrMin;
-	float feedsDeliveryMtrMin;
 	float lengthLimit;
 	float tensionDraft;
 	uint8_t machineState;
@@ -180,10 +179,12 @@ void InitInternalSettings(internalSettings *i);
 void setupCardingMCType(CardingMc *c,userSettings *u);
 uint8_t CheckCylindersRampUpOver(CardingMc *c,ExtendedRunTime_TypeDef *cylinder,ExtendedRunTime_TypeDef *beater,RunTime_TypeDef *pickerCylinder);
 void updateCardingSectionSpeeds(CardingMc *c,userSettings *u);
+void updateFeedSectionSpeeds(CardingMc *c,userSettings *u);
 
 //coiler and potentiometer related functions
 //void updateCoilerParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m);
 uint16_t calcBaseCoilerRPM(userSettings *u);
+void updateCoilerParameters(CardingMc *c, userSettings *u);
 
 uint8_t getMotorCANAddress(uint8_t motor);
 uint8_t GetMotorID_from_CANAddress(uint8_t canAddress);

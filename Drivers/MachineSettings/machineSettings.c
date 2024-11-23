@@ -71,31 +71,18 @@ void updateCardingSectionSpeeds(CardingMc *c,userSettings *u){
 	c->M.coilerMotorRPM = c->R.coilerGBShaftRPM  * COILER_GB;
 }
 
-/*
-void CalculateMachineParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m){
-	m->cylinderRPM = ms->cylinderSpeed/CYLINDER_GEAR_RATIO;
-	m->beaterRPM = ms->beaterSpeed/CYLINDER_GEAR_RATIO;
-	m->cylinderFeedRPM = ms->cylinderFeed * CYLINDER_FEED_GB;
-	m->beaterFeedRPM = ms->beaterFeed * BEATER_FEED_GB;
-	m->cageGB_RPM = (ms->delivery_mMin*1000)/TONGUE_GROOVE_CIRCUMFERENCE_MM;
-	m->cageRPM = m->cageGB_RPM * CAGE_GB;
-	float req_coiler_tongue_surfaceSpeed_mm = (ms->delivery_mMin*1000) * ms->draft;
-	float req_coiler_tongueRPM = req_coiler_tongue_surfaceSpeed_mm/COILER_GROOVE_CIRCUMFERENCE_MM;
-	m->coilerGB_rpm = req_coiler_tongueRPM/COILER_GROOVE_TO_GB_RATIO;
-	m->coilerRPM = m->coilerGB_rpm * COILER_GB;
+void updateFeedSectionSpeeds(CardingMc *c,userSettings *u){
+	c->R.btrFeedRPM = u->btrFeedRPM;
+	if (c->R.btrFeedRPM > 11){c->R.btrFeedRPM = 11;}
+	if (c->R.btrFeedRPM < 0.2){c->R.btrFeedRPM = 0.2;}
+	c->M.btrFeedMotorRPM = c->R.btrFeedRPM * BEATER_FEED_GB;
+
+	c->R.pickerFeedRPM = u->AF_FeedRPM;
+	if (c->R.pickerFeedRPM > 8){c->R.pickerFeedRPM = 8;}
+	if (c->R.pickerFeedRPM < 0.2){c->R.pickerFeedRPM = 0.2;}
+	c->M.afFeedMotorRPM = c->R.pickerFeedRPM * AF_FEED_GB;
 }
 
-void UpdateMachineParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m){
-	m->cylinderFeedRPM = ms->cylinderFeed * CYLINDER_FEED_GB;
-	m->beaterFeedRPM = ms->beaterFeed * BEATER_FEED_GB;
-	m->cageGB_RPM = (ms->delivery_mMin*1000)/TONGUE_GROOVE_CIRCUMFERENCE_MM;
-	m->cageRPM = m->cageGB_RPM * CAGE_GB;
-	float req_coiler_tongue_surfaceSpeed_mm = (ms->delivery_mMin*1000) * ms->draft;
-	float req_coiler_tongueRPM = req_coiler_tongue_surfaceSpeed_mm/COILER_GROOVE_CIRCUMFERENCE_MM;
-	m->coilerGB_rpm = req_coiler_tongueRPM/COILER_GROOVE_TO_GB_RATIO;
-	m->coilerRPM = m->coilerGB_rpm * COILER_GB;
-}
-*/
 
 //for coiler Tension draft pot calcs.the coiler RPM at deliverym/min and draft of 1
 uint16_t calcBaseCoilerRPM(userSettings *u){
@@ -106,14 +93,14 @@ uint16_t calcBaseCoilerRPM(userSettings *u){
 	return coilerRPM;
 }
 
-/*
-void updateCoilerParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m){
-		float req_coiler_tongue_surfaceSpeed_mm = (ms->delivery_mMin*1000) * ms->draft;
-		float req_coiler_tongueRPM = req_coiler_tongue_surfaceSpeed_mm/COILER_GROOVE_CIRCUMFERENCE_MM;
-		m->coilerGB_rpm = req_coiler_tongueRPM/COILER_GROOVE_TO_GB_RATIO;
-		m->coilerRPM = m->coilerGB_rpm * COILER_GB;
+
+void updateCoilerParameters(CardingMc *c, userSettings *u){
+	float req_coiler_tongue_surfaceSpeed_mm = (c->cardingDelivery_mtrMin*1000) * c->tensionDraft ;
+	float req_coiler_tongueRPM = req_coiler_tongue_surfaceSpeed_mm/COILER_GROOVE_CIRCUMFERENCE_MM;
+	c->R.coilerGBShaftRPM = req_coiler_tongueRPM/COILER_GROOVE_TO_GB_RATIO;
+	c->M.coilerMotorRPM = c->R.coilerGBShaftRPM  * COILER_GB;
 }
-*/
+
 
 uint8_t getMotorCANAddress(uint8_t motor){
 	if (motor == CARDING_CYLINDER){

@@ -43,10 +43,10 @@ uint8_t CheckUserSettings(userSettings* u){
 	if ((u->deliveryMtrMin_CardFeed_Ratio > 3.0f) || (u->deliveryMtrMin_CardFeed_Ratio < 10.0f)){
 			return 0;
 	}
-	if ((u->btrFeedRPM > 11.0f) || (u->btrFeedRPM < 1.0f)){
+	if ((u->btrFeedRPM > 11.0f) || (u->btrFeedRPM < 0.1f)){
 			return 0;
 	}
-	if ((u->AF_FeedRPM > 8.0f) || (u->AF_FeedRPM < 1.0f)){
+	if ((u->AF_FeedRPM > 8.0f) || (u->AF_FeedRPM < 0.1f)){
 			return 0;
 	}
 	return 1;
