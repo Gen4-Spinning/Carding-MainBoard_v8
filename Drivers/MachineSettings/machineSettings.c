@@ -36,7 +36,7 @@ void setupCardingMCType(CardingMc *c,userSettings *u){
 	if (c->R.btrFeedRPM < 0.2){c->R.btrFeedRPM = 0.2;}
 	c->M.btrFeedMotorRPM = c->R.btrFeedRPM * BEATER_FEED_GB;
 
-	c->R.pickerFeedRPM = u->AF_FeedRPM;
+	c->R.pickerFeedRPM = u->AF_FeedRPM*2;
 	if (c->R.pickerFeedRPM > 8){c->R.pickerFeedRPM = 8;}
 	if (c->R.pickerFeedRPM < 0.2){c->R.pickerFeedRPM = 0.2;}
 	c->M.afFeedMotorRPM = c->R.pickerFeedRPM * AF_FEED_GB;

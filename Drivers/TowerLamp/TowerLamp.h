@@ -28,6 +28,8 @@
 #define AMBER_ON 1
 #define AMBER_OFF 0
 
+#define SAME_STATE -1
+
 void TowerLamp_SetState(MCP23017_HandleTypeDef *mcp,MCP23017_PortB *pb,int8_t buzzerOn,int8_t redOn, int8_t greenOn,int8_t amberOn);
 void TowerLamp_ApplyState(MCP23017_HandleTypeDef *mcp,MCP23017_PortB *pb);
 void TowerLamp_NegateState(MCP23017_HandleTypeDef *mcp,MCP23017_PortB *pb,uint8_t light);

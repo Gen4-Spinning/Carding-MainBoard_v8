@@ -115,7 +115,7 @@ void IdleState(void){
 				//enable Beep Logic
 				tdp.beepEnable = 1;
 				tdp.beepCounter = 0;
-				TowerLamp_NegateState(&hmcp, &mcp_portB,TOWER_BUZZER);
+				TowerLamp_SetState(&hmcp, &mcp_portB,BUZZER_ON,SAME_STATE,SAME_STATE,SAME_STATE);
 				TowerLamp_ApplyState(&hmcp,&mcp_portB);
 			}
 
@@ -123,12 +123,17 @@ void IdleState(void){
 				tdp.beepCounter ++;
 				if (tdp.beepCounter >2){
 					tdp.beepEnable = 0;
-					TowerLamp_NegateState(&hmcp, &mcp_portB,TOWER_BUZZER);
+					TowerLamp_SetState(&hmcp, &mcp_portB,BUZZER_OFF,SAME_STATE,SAME_STATE,SAME_STATE);
 					TowerLamp_ApplyState(&hmcp,&mcp_portB);
 				}
 			}
+
 			S.TD_POT_check = 0;
 		}
+
+		ductCardFeedTop.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
+		ductCardFeedBtm.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_BTM_CARDFEED);
+		ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
 
 		//-------for Manual change--------
 		if (S.current_state != IDLE_STATE){

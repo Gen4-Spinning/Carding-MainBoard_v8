@@ -338,18 +338,19 @@ int main(void)
   //now setup the Machine Settings
   ReadUserSettingsFromEeprom(&u);
   MBE.EepromLoadValsGood = CheckUserSettings(&u);
+
   //MBE.EepromLoadValsGood = 0;
   if (MBE.EepromLoadValsGood == 0){
 	  LoadDefaultUserSettings(&u);
 	  //manualWrite
-	  /*u.delivery_mMin = 10;
+	  u.delivery_mMin = 10;
 	  u.lengthLimit = 100;
 	  u.cardCylRPM = 750;
 	  u.btrCylRPM = 600;
-	  u.pickerCylRPM = 700;
-	  u.btrFeedRPM = 5.0f;
-	  u.AF_FeedRPM = 0.5f;
-	  u.deliveryMtrMin_CardFeed_Ratio=5.0f;*/
+	  u.pickerCylRPM = 600;
+	  u.btrFeedRPM = 10.0f;
+	  u.AF_FeedRPM = 7.0f;
+	  u.deliveryMtrMin_CardFeed_Ratio=5.0f;
 	  MBE.defaults_eepromWriteFailed = WriteUserSettingsIntoEeprom(&u);
   }
   setupCardingMCType(&C,&u);
@@ -882,7 +883,7 @@ static void MX_TIM17_Init(void)
   htim17.Instance = TIM17;
   htim17.Init.Prescaler = 1499;
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim17.Init.Period = 1499;
+  htim17.Init.Period = 1499;//was 1499
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim17.Init.RepetitionCounter = 0;
   htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;

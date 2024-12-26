@@ -26,6 +26,13 @@
 extern UART_HandleTypeDef huart1;
 uint8_t updateSettings = 0;
 
+
+uint8_t startBtrFeed= 0,stopBtrFeed =0;
+uint8_t sentMsgToBtrFeed = 0,BtrFeedMsgSentSuccess =0,BtrFeedMsgSentFail=0;
+uint16_t beaterMotorRPM1 = 0;
+uint8_t msgSuccess = 0;
+
+
 void RunState(void){
 
 	uint8_t response = 0;
@@ -61,29 +68,54 @@ void RunState(void){
 			C.D.cardFeedTop_sensorState = ductCardFeedTop.presentState; // putting the sensor states in the C struct
 			C.D.cardFeedBtm_sensorState  = ductCardFeedBtm.presentState;
 			processCardFeedDuctLevel(&C);
-			if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
-				sendCommandToBeaterFeedMotor(&C,&u);
+			if (S.runMode != RUN_RAMPUP){
+				msgSuccess = sendCommandToBeaterFeedMotor(&C,&u);
+				sentMsgToBtrFeed += 1;
+				if (msgSuccess == 1){
+					BtrFeedMsgSentSuccess += 1;
+				}else{
+					BtrFeedMsgSentFail += 1;
+				}
+
 			}
 			ductCardFeedTop.ductStateChanged = 0;
 			ductCardFeedBtm.ductStateChanged = 0;
 		}
 
 		// check duct auto Feed Status. Status is set here, and used in the Run State blocks of code below.
-		/*ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
+		ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
 		ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
 		if (ductAutoFeed.ductStateChanged){
 			uint8_t autoFeedCommand = 0;
-			if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
-				if (C.D.autoFeed_sensorState == DUCT_SENSOR_OPEN){
+			C.D.autoFeed_sensorState = ductAutoFeed.presentState;
+			if (S.runMode != RUN_RAMPUP){
+				if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_OPEN){
 					C.D.autoFeed_ductState_current = DUCT_OPEN;
 					autoFeedCommand = START;
-				}else if (C.D.autoFeed_sensorState == DUCT_SENSOR_CLOSED){
+				}else if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_CLOSED){
 					C.D.autoFeed_ductState_current = DUCT_CLOSED;
 					autoFeedCommand = RAMPDOWN_STOP;
 				}
 				sendStartStopToAutoFeedMotor(&C,autoFeedCommand);
 			}
 			ductAutoFeed.ductStateChanged = 0;
+		}
+
+
+		/*if (startBtrFeed){
+			beaterMotorRPM1 = u.btrFeedRPM* BEATER_FEED_GB;;
+			SU[BEATER_FEED].RPM = beaterMotorRPM1;
+			uint8_t motors[] = {BEATER_FEED};
+			uint8_t noOfMotors = 1;
+			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
+			startBtrFeed = 0;
+		}
+
+		if(stopBtrFeed){
+			uint8_t motors[] = {BEATER_FEED};
+			uint8_t noOfMotors = 1;
+			response = SendCommands_To_MultipleMotors(motors,noOfMotors,RAMPDOWN_STOP);
+			stopBtrFeed = 0;
 		}*/
 
 		/*----------------Ending Beater Feed and AF Feed Logic -----------------*/
@@ -97,6 +129,7 @@ void RunState(void){
 				//force the cardFeed section above to check the duct state by setting present state to not what it currently is
 				ductCardFeedTop.presentState = DUCT_SENSOR_RESET;
 				ductCardFeedBtm.presentState = DUCT_SENSOR_RESET;
+				ductAutoFeed.presentState = DUCT_SENSOR_RESET;
 			}
 		}
 
@@ -110,7 +143,7 @@ void RunState(void){
 			}
 		}
 
-		if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
+		/*if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
 			if ((usrBtns.rotarySwitch == ROTARY_SWITCH_ON)&&((C.D.autoFeed_ductState_current==DUCT_CLOSED)||(C.D.autoFeed_ductState_current==DUCT_RESET))){
 				C.D.autoFeed_ductState_current = DUCT_OPEN;
 				sendStartStopToAutoFeedMotor(&C,START);
@@ -119,10 +152,10 @@ void RunState(void){
 				C.D.autoFeed_ductState_current = DUCT_CLOSED;
 				sendStartStopToAutoFeedMotor(&C,RAMPDOWN_STOP);
 			}
-		}
+		}*/
 
 		if (updateSettings){
-			if (S.runMode == RUN_CARDING_SECTION){ // later logic with puase/peicing
+			if (S.runMode == RUN_CARDING_SECTION){ // later logic with pause/peicing
 				updateCardingSectionSpeeds(&C,&u);
 				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
 				uint16_t targets[] = {C.M.cardFeedMotorRPM,C.M.cageMotorRPM,C.M.coilerMotorRPM};
@@ -141,8 +174,6 @@ void RunState(void){
 
 	   if (S.runMode == RUN_CARDING_SECTION){
 			// TO DO: Pieceing, tension draft changing,in pause mode changing settings..
-
-
 			if (usrBtns.yellowBtn == BTN_PRESSED){
 				usrBtns.yellowBtn = BTN_IDLE;
 				//Pause
@@ -198,7 +229,7 @@ void RunState(void){
 				//enable Beep Logic
 				tdp.beepEnable = 1;
 				tdp.beepCounter = 0;
-				TowerLamp_NegateState(&hmcp, &mcp_portB,TOWER_BUZZER);
+				TowerLamp_SetState(&hmcp, &mcp_portB,BUZZER_ON,SAME_STATE,SAME_STATE,SAME_STATE);
 				TowerLamp_ApplyState(&hmcp,&mcp_portB);
 			}
 
@@ -206,7 +237,7 @@ void RunState(void){
 				tdp.beepCounter ++;
 				if (tdp.beepCounter >2){
 					tdp.beepEnable = 0;
-					TowerLamp_NegateState(&hmcp, &mcp_portB,TOWER_BUZZER);
+					TowerLamp_SetState(&hmcp, &mcp_portB,BUZZER_OFF,SAME_STATE,SAME_STATE,SAME_STATE);
 					TowerLamp_ApplyState(&hmcp,&mcp_portB);
 				}
 			}
