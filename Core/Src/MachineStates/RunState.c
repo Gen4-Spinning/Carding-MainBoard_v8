@@ -37,7 +37,7 @@ void RunState(void){
 
 	uint8_t response = 0;
 	uint8_t noOfMotors = 0;
-	//uint8_t BTpacketSize = 0;
+	uint8_t BTpacketSize = 0;
 	long currentTime;
 	while(1){
 
@@ -135,11 +135,54 @@ void RunState(void){
 
 		if (S.runMode == RUN_FILL_DUCT){
 			if (C.D.cardFeed_ductLevel == DUCT_LEVEL_HIGH){
-				updateCardingSectionSpeeds(&C,&u);
+				if (usrBtns.rotarySwitch == ROTARY_SWITCH_ON){
+					S.piecingMode = 1;
+					updateCardingSectionPiecingSpeeds(&C,&u,I.piecingDeliveryMtrsMin);
+				}else{
+					S.piecingMode = 0;
+					updateCardingSectionSpeeds(&C,&u);
+				}
+				ReadySetupRPMCommand_CardingMotors(&C);
 				S.runMode = RUN_CARDING_SECTION;
 				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
 				noOfMotors = 3;
 				response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
+			}
+		}
+
+		//piecing mode is only applied in runAll
+		if (usrBtns.rotarySwitch == ROTARY_SWITCH_ON){
+			if (S.piecingMode == 0){
+				S.piecingMode = 1;
+				updateCardingSectionPiecingSpeeds(&C,&u,I.piecingDeliveryMtrsMin);
+				ReadySetupRPMCommand_CardingMotors(&C);
+
+				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
+				uint16_t targets[] = {C.M.cardFeedMotorRPM,
+						C.M.cageMotorRPM,C.M.coilerMotorRPM};
+				noOfMotors = 3;
+				SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
+				S.piecingMode = 1;
+				L.logRunStateChange = 1;
+			}
+		}else{
+			if (S.piecingMode == 1){
+				updateCardingSectionSpeeds(&C,&u);
+				ReadySetupRPMCommand_CardingMotors(&C);
+
+				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
+				uint16_t targets[] = {C.M.cardFeedMotorRPM,
+						C.M.cageMotorRPM,C.M.coilerMotorRPM};
+				noOfMotors = 3;
+				SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
+
+				//we send the default coiler speed here, so to force the code to check the
+				//pot we reset the pot applied level here. this will force the tdp code to check
+				// the pot reading and if its different from the applied level will apply it.
+				tdp.appliedLevel = 0;
+
+				S.piecingMode = 0;
+				L.logRunStateChange = 1;
 			}
 		}
 
@@ -154,21 +197,30 @@ void RunState(void){
 			}
 		}*/
 
-		if (updateSettings){
-			if (S.runMode == RUN_CARDING_SECTION){ // later logic with pause/peicing
-				updateCardingSectionSpeeds(&C,&u);
-				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
-				uint16_t targets[] = {C.M.cardFeedMotorRPM,C.M.cageMotorRPM,C.M.coilerMotorRPM};
-				noOfMotors = 3;
-				SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
-			}
-			if ((S.runMode == RUN_CARDING_SECTION || S.runMode == RUN_FILL_DUCT)){
+		/*if settings modified through app for carding:
+		 * update the settings whatever the state(pause/rampup/fill or normal). But onyl send the change
+		 * target during the normal mode , when we re not in piecing.
+		 * but if in pause or rampup mode since the motors are not in run state,
+		 * sending a change target wont do anything. Instead when we come out of
+		 * the state, the start command to the motors will take into account the new settings
+		 * In run state, only if we re not in piecing mode send the new settings.
+		 * However the app will say settings updated, (even if it doesnt immediately apply)
+		 */
+		if (S.settingsModified){
+			updateCardingSectionSpeeds(&C,&u);
+			if ((S.runMode == RUN_CARDING_SECTION)&&(S.piecingMode==0)){
+					uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
+					uint16_t targets[] = {C.M.cardFeedMotorRPM,C.M.cageMotorRPM,C.M.coilerMotorRPM};
+					noOfMotors = 3;
+					SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
+				}
+			/*if ((S.runMode == RUN_CARDING_SECTION || S.runMode == RUN_FILL_DUCT)){
 				updateFeedSectionSpeeds(&C,&u);
 				ductCardFeedTop.presentState = DUCT_SENSOR_RESET; // resetting this state, forces the duct code to send a new command
 				ductCardFeedBtm.presentState = DUCT_SENSOR_RESET;
-			}
+			} DOESNT WORK!*/
 
-			updateSettings = 0;
+			S.settingsModified = 0;
 		}
 
 
@@ -192,6 +244,18 @@ void RunState(void){
 			if (usrBtns.greenBtn == BTN_PRESSED){
 				usrBtns.greenBtn = BTN_IDLE;
 				//RESUME
+				if (usrBtns.rotarySwitch == ROTARY_SWITCH_ON){
+					S.piecingMode = 1;
+					updateCardingSectionPiecingSpeeds(&C,&u,I.piecingDeliveryMtrsMin);
+				}else{
+					S.piecingMode = 0;
+					updateCardingSectionSpeeds(&C,&u);
+					//we send the default coiler speed here, so to force the code to check the
+					//pot we reset the pot applied level here. this will force the tdp code to check
+					// the pot reading and if its different from the applied level will apply it.
+					tdp.appliedLevel = 0;
+				}
+				ReadySetupRPMCommand_CardingMotors(&C);
 				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
 				noOfMotors =3;
 				response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
@@ -203,11 +267,31 @@ void RunState(void){
 			}
 		}
 
+		/*---- go into settings when need be-----*/
+		if (S.switchState == TO_SETTINGS){
+			ChangeState(&S,SETTINGS_STATE);
+			S.switchState = 0;
+			break;
+		}
 
 		if (S.oneSecTimer != currentTime){
 			C.L.mcPower = ER[0].power + ER[1].power + R[2].power + R[3].power + R[4].power + R[5].power + R[6].power+ R[7].power;
 			currentTime = S.oneSecTimer;
 		}
+
+		//--------sending BT info--------
+		// 500ms timer.
+		if ((S.BT_sendState == 1) && (S.BT_transmission_over == 1)){
+			if (S.runMode != RUN_PAUSED){
+				BTpacketSize = BT_MC_generateStatusMsg(BT_RUN);
+			}else{
+				BTpacketSize = BT_MC_generateStatusMsg(BT_PAUSE);
+			}
+			HAL_UART_Transmit_IT(&huart1,(uint8_t*)BufferTransmit,BTpacketSize);
+			S.BT_transmission_over = 0;
+			S.BT_sendState = 0;
+		}
+
 
 		if (S.TD_POT_check == 1){ //500ms
 			TD_readADC(&tdp);

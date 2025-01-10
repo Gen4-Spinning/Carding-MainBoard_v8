@@ -19,6 +19,7 @@ typedef struct Setup_NormalMotor_Struct{
 extern SetupMotor SU[8];
 
 void ReadySetupCommand_AllMotors(CardingMc *C);
+void ReadySetupRPMCommand_CardingMotors(CardingMc *C);
 
 uint8_t SendCommands_To_MultipleMotors(uint8_t *motorList,uint8_t motorArraySize,uint8_t command);
 uint8_t Send_DiagCommands_To_MultipleMotors(uint8_t *motorList,uint8_t motorArraySize,uint8_t command);

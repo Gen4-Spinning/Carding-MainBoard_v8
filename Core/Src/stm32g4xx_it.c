@@ -51,6 +51,7 @@ uint16_t onems_counter = 0;
 uint16_t CAN_chk_timer_100ms = 0;
 extern char BufferRec[];
 extern DMA_HandleTypeDef hdma_usart1_rx;
+extern userSettings uBT;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -462,7 +463,7 @@ void UART_IDLECallback(void){
 				  S.switchState = TO_SETTINGS; // only check for this in IDLE STATE
 			  }
 			  else if (BT.information == SETTINGS_FROM_APP){
-				  S.BT_dataOK = BT_MC_parse_Settings(&msp_BT); // we have to parse inside this function because it needs buffer Rec
+				  S.BT_dataOK = BT_MC_parse_Settings(&uBT); // we have to parse inside this function because it needs buffer Rec
 				  S.switchState = TO_SETTINGS; // only check for this in IDLE STATE
 			  }
 			  else if (BT.information == DIAGNOSTICS_FROM_APP){

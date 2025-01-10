@@ -82,7 +82,7 @@ void Log_DoOneCycle(void){
 				L.logRunStateChange = 0;
 			}
 			else if (L.logSettings == 1){
-				L.bufferIdx += Log_addSettingsDataToBuffer(&msp,L.bufferIdx);
+				L.bufferIdx += 1 ;// Log_addSettingsDataToBuffer(&msp,L.bufferIdx);
 				L.logSettings = 0;
 			}
 			else if (L.flushBuffer){ // to be used only in idle mode and error Mode so that we can get all the data in the buffer

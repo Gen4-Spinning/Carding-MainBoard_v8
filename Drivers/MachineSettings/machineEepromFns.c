@@ -16,8 +16,8 @@ void ReadUserSettingsFromEeprom(userSettings *u){
 	u->cardCylRPM = EE_ReadInteger(C_CARDING_CYL_SPEED_ADDR);
 	u->btrCylRPM = EE_ReadInteger(C_BEATER_CYL_SPEED_ADDR);
 	u->pickerCylRPM = EE_ReadInteger(C_PICKER_CYL_SPEED_ADDR);
-	u->btrFeedRPM =  EE_ReadFloat(C_BTRFEED_SPEED_ADDR);
-	u->AF_FeedRPM =  EE_ReadFloat(C_AFFEED_SPEED_ADDR);
+	u->btrFeedRPM =  EE_ReadInteger(C_BTRFEED_SPEED_ADDR);
+	u->AF_FeedRPM =  EE_ReadInteger(C_AFFEED_SPEED_ADDR);
 	//transferRatios
 	u->deliveryMtrMin_CardFeed_Ratio =  EE_ReadFloat(C_DELIVERY_CARDFEED_RATIO_ADDR);
 
@@ -40,7 +40,7 @@ uint8_t CheckUserSettings(userSettings* u){
 	if ((u->pickerCylRPM > 650) || (u->pickerCylRPM < 300)){
 		return 0;
 	}
-	if ((u->deliveryMtrMin_CardFeed_Ratio > 3.0f) || (u->deliveryMtrMin_CardFeed_Ratio < 10.0f)){
+	if ((u->deliveryMtrMin_CardFeed_Ratio < 3.0f) || (u->deliveryMtrMin_CardFeed_Ratio > 10.0f)){
 			return 0;
 	}
 	if ((u->btrFeedRPM > 11.0f) || (u->btrFeedRPM < 0.1f)){

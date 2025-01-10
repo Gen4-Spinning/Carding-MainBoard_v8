@@ -12,7 +12,13 @@
 #include "CAN_MotherBoard.h"
 #include "Ack.h"
 
-
+void ReadySetupRPMCommand_CardingMotors(CardingMc *C){
+	SU[CARDING_CYLINDER].RPM = C->M.cardCylMotorRPM;
+	SU[BEATER_CYLINDER].RPM = C->M.btrCylMotorRPM;
+	SU[CAGE].RPM = C->M.cageMotorRPM;
+	SU[CARDING_FEED].RPM = C->M.cardFeedMotorRPM;
+	SU[COILER].RPM = C->M.coilerMotorRPM;
+}
 
 void ReadySetupCommand_AllMotors(CardingMc *C){
 	SU[CARDING_CYLINDER].RPM = C->M.cardCylMotorRPM;
@@ -270,7 +276,7 @@ uint8_t SendChangeTargetToMultipleMotors(uint8_t *motorList,uint8_t motorArraySi
 	for (int i=0;i<noOfMotors;i++){
 		canID = motorAddresses[i];
 		targetRpm = changeTargets[i];
-		FDCAN_sendChangeTarget_ToMotor(canID,targetRpm,msp.rampTimes*1000);
+		FDCAN_sendChangeTarget_ToMotor(canID,targetRpm,I.changeRPM_rampTimes*1000);
 	}
 	while(ack.waitingForAckResult){};
 	if (ack.ackResult ==  ACK_FAIL){

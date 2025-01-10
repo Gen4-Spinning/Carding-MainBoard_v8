@@ -232,7 +232,7 @@ uint8_t ParseDiagnostics(void){
 		}
     }
 
-    if (D.motorID <= 6){
+    if (D.motorID <= 8){
 		if (count == 5){
 			allSettingsRecieved = 1;
 		}
@@ -335,11 +335,11 @@ uint8_t BT_MC_generateStatusMsg(uint8_t state){
 		  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_FLOAT,initLength+tlvSize);
 		  tlvSize += TLV_FLOAT;
 
-		  generateTLV_I(TLV_Buffer,RUN_DUCT_SENSOR,C.D.cardFeed_ductState_current);
+		  generateTLV_I(TLV_Buffer,CARDING_DUCT_STATE,C.D.cardFeed_ductState_current);
 		  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 		  tlvSize += TLV_INT;
 
-		  generateTLV_I(TLV_Buffer,RUN_COILER_SENSOR,1);
+		  generateTLV_I(TLV_Buffer,RUN_COILER_SENSOR,C.D.autoFeed_ductState_current);
 		  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 		  tlvSize += TLV_INT;
 

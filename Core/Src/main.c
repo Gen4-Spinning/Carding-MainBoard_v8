@@ -89,6 +89,7 @@ DMA_HandleTypeDef hdma_usart2_tx;
 /* USER CODE BEGIN PV */
 machineSettingsTypeDef msp;
 userSettings u;
+userSettings uBT; // userSettingsBT
 internalSettings I;
 CardingMc C;
 Sensor ductCardFeedTop;
@@ -189,7 +190,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if(htim==&htim15){
 	  // This is meant to send motor run time data to the app when diag is running.
 	  // here all motors run only 1 at a time
-	  if (D.motorID <= 6){
+	  if (D.motorID <= 8){
 		  uint8_t packetSize = BT_MC_generateDiagnosticMsg(D.motorID);
 		  HAL_UART_Transmit_IT(&huart1,(uint8_t*)BufferTransmit,packetSize);
 	  }
@@ -287,9 +288,7 @@ int main(void)
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-
-
-	HAL_Init();
+  HAL_Init();
 
   /* USER CODE BEGIN Init */
 
@@ -350,7 +349,7 @@ int main(void)
 	  u.pickerCylRPM = 600;
 	  u.btrFeedRPM = 10.0f;
 	  u.AF_FeedRPM = 7.0f;
-	  u.deliveryMtrMin_CardFeed_Ratio=5.0f;
+	  u.deliveryMtrMin_CardFeed_Ratio=6.66f;
 	  MBE.defaults_eepromWriteFailed = WriteUserSettingsIntoEeprom(&u);
   }
   setupCardingMCType(&C,&u);
@@ -371,7 +370,7 @@ int main(void)
   ChangeState(&S,IDLE_STATE);
 
   //Setup the Bluetooth device MANUALLY ONLY.
-  BTCmd.manual_setup = 0;
+  BTCmd.manual_setup = 1;
   if (BTCmd.manual_setup){
 	  BTCmd.manual_setup_result = BT_SetupDevice();
 	  if(BTCmd.manual_setup_result != 1){
@@ -883,7 +882,7 @@ static void MX_TIM17_Init(void)
   htim17.Instance = TIM17;
   htim17.Init.Prescaler = 1499;
   htim17.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim17.Init.Period = 1499;//was 1499
+  htim17.Init.Period = 2999;
   htim17.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim17.Init.RepetitionCounter = 0;
   htim17.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;

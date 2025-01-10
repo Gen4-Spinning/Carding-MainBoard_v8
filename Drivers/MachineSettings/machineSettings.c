@@ -13,6 +13,7 @@ void InitInternalSettings(internalSettings *i){
 	i->cardingDuctSensorTopDelay= 2;
 	i->cardingDuctSensorBtmDelay= 2;
 	i->piecingDeliveryMtrsMin = 3;
+	i->changeRPM_rampTimes = 2;
 }
 
 void setupCardingMCType(CardingMc *c,userSettings *u){
@@ -50,11 +51,28 @@ void setupCardingMCType(CardingMc *c,userSettings *u){
 	float req_coiler_tongueRPM = req_coiler_tongue_surfaceSpeed_mm/COILER_GROOVE_CIRCUMFERENCE_MM;
 	c->R.coilerGBShaftRPM = req_coiler_tongueRPM/COILER_GROOVE_TO_GB_RATIO;
 	c->M.coilerMotorRPM = c->R.coilerGBShaftRPM  * COILER_GB;
-
 }
 
 void updateCardingSectionSpeeds(CardingMc *c,userSettings *u){
 	c->cardingDelivery_mtrMin = u->delivery_mMin;
+	c->R.cardFeedRPM = c->cardingDelivery_mtrMin/u->deliveryMtrMin_CardFeed_Ratio;
+	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
+	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}
+	c->M.cardFeedMotorRPM = c->R.cardFeedRPM * CYLINDER_FEED_GB;
+
+	c->R.TgRPM = (c->cardingDelivery_mtrMin*1000)/TONGUE_GROOVE_CIRCUMFERENCE_MM;
+	float cageGB_shaftRPM = c->R.TgRPM  * TG_TO_GB_RATIO;
+	c->R.cageRPM = cageGB_shaftRPM/CAGE_TO_GB_RATIO;
+	c->M.cageMotorRPM =  cageGB_shaftRPM * CAGE_GB;
+
+	float req_coiler_tongue_surfaceSpeed_mm = (c->cardingDelivery_mtrMin*1000) * c->tensionDraft ;
+	float req_coiler_tongueRPM = req_coiler_tongue_surfaceSpeed_mm/COILER_GROOVE_CIRCUMFERENCE_MM;
+	c->R.coilerGBShaftRPM = req_coiler_tongueRPM/COILER_GROOVE_TO_GB_RATIO;
+	c->M.coilerMotorRPM = c->R.coilerGBShaftRPM  * COILER_GB;
+}
+
+void updateCardingSectionPiecingSpeeds(CardingMc *c,userSettings *u,float piecingDeliveryMtr_Min){
+	c->cardingDelivery_mtrMin = piecingDeliveryMtr_Min;
 	c->R.cardFeedRPM = c->cardingDelivery_mtrMin/u->deliveryMtrMin_CardFeed_Ratio;
 	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
 	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}

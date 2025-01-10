@@ -9,7 +9,7 @@
 #define MACHINEERRORS_H_
 
 #include "stdio.h"
-
+#include "stdint.h"
 //errType
 #define ERR_MOTOR_SOURCE 1
 #define ERR_SYSTEM_LEVEL_SOURCE 2

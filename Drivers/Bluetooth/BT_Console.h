@@ -31,7 +31,7 @@
 #define BTCMD_REBOOT 5
 #define BTCMD_GETNAME 6
 
-#define MACHINENAME "CARDING"
+#define MACHINENAME "TEST"
 #define NAME_STR_LEN 7
 
 typedef struct BTconsole{

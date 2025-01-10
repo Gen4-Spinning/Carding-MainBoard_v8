@@ -9,7 +9,7 @@
 #define INC_STRUCT_H_
 
 #include "stdio.h"
-
+#include "stdint.h"
 
 typedef struct Diagnostics_Struct
 {

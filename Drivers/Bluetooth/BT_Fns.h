@@ -84,7 +84,7 @@
 #define RUN_OUTPUT_MTRS_PER_SPINDLE 0x08
 #define RUN_TLV_WHAT_INFO  0x09// what data is going to be sent
 #define RUN_TOTAL_POWER 0x0A
-#define RUN_DUCT_SENSOR 0x0B
+#define CARDING_DUCT_STATE 0x0B
 #define RUN_COILER_SENSOR 0x0C
 #define RUN_CARDING_DLVRY_MTR_MIN 0x0D
 #define RUN_DF_OUTPUT_LENGTH 0x0E

@@ -95,7 +95,7 @@ void DebugState(void){
 
 		if (check_TD_pot){
 			TD_readADC(&tdp);
-			if (msp.delivery_mMin != tdp.usedDeliveryM_min){
+			if (u.delivery_mMin != tdp.usedDeliveryM_min){
 				TD_calculateMaxDraft(&tdp,&u);
 				tdp.appliedLevel = 0; // force recalculation of td value when mtr/min changes
 			}

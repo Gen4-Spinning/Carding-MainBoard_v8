@@ -8,7 +8,7 @@
 #include "BT_Machine.h"
 
 
-uint8_t BT_MC_generateSettingsMsg(machineSettingsTypeDef *m){
+uint8_t BT_MC_generateSettingsMsg(userSettings *u){
 	  char TLV_Buffer[12];
 	  uint8_t tlvSize = 0;
 	  uint8_t eof_size  = 0;
@@ -16,39 +16,35 @@ uint8_t BT_MC_generateSettingsMsg(machineSettingsTypeDef *m){
 
 	  initLength = Init_TXBuf_Frame(SETTINGS_FROM_MC,SUBSTATE_NA,12);
 
-	  generateTLV_F(TLV_Buffer,DELIVERY_M_MIN_BT,m->delivery_mMin);
+	  generateTLV_F(TLV_Buffer,DELIVERY_M_MIN_BT,u->delivery_mMin);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_FLOAT,initLength+tlvSize);
 	  tlvSize += TLV_FLOAT;
 
-	  generateTLV_F(TLV_Buffer,DRAFT_BT,m->draft);
+	  generateTLV_F(TLV_Buffer,CARD_FEED_RATIO_BT,u->deliveryMtrMin_CardFeed_Ratio);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_FLOAT,initLength+tlvSize);
 	  tlvSize += TLV_FLOAT;
 
-	  generateTLV_I(TLV_Buffer,CARDING_CYL_SPEED_BT,m->cylinderSpeed);
+	  generateTLV_I(TLV_Buffer,LENGTH_LIMIT_BT,(uint16_t)u->lengthLimit);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 	  tlvSize += TLV_INT;
 
-	  generateTLV_I(TLV_Buffer,BEATER_CYL_SPEED_BT,m->beaterSpeed);
+	  generateTLV_I(TLV_Buffer,CARDING_CYL_SPEED_BT,u->cardCylRPM);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 	  tlvSize += TLV_INT;
 
-	  generateTLV_F(TLV_Buffer,CARDING_FEED_SPEED_BT,m->cylinderFeed);
-	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_FLOAT,initLength+tlvSize);
-	  tlvSize += TLV_FLOAT;
-
-	  generateTLV_F(TLV_Buffer,BEATER_FEED_SPEED_BT,m->beaterFeed);
-	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_FLOAT,initLength+tlvSize);
-	  tlvSize += TLV_FLOAT;
-
-	  generateTLV_I(TLV_Buffer,TRUNK_DELAY_BT,m->trunkDelay);
+	  generateTLV_I(TLV_Buffer,BEATER_CYL_SPEED_BT,u->btrCylRPM);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 	  tlvSize += TLV_INT;
 
-	  generateTLV_I(TLV_Buffer,LENGTH_LIMIT_BT,m->lengthLimit);
+	  generateTLV_I(TLV_Buffer,PICKER_CYL_SPEED_BT,u->pickerCylRPM);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 	  tlvSize += TLV_INT;
 
-	  generateTLV_I(TLV_Buffer,RAMPTIMES_BT,m->rampTimes);
+	  generateTLV_I(TLV_Buffer,BEATER_FEED_SPEED_BT,u->btrFeedRPM);
+	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
+	  tlvSize += TLV_INT;
+
+	  generateTLV_I(TLV_Buffer,AF_FEED_SPEED_BT,u->AF_FeedRPM);
 	  add_TLVBuf_To_TxBuf(TLV_Buffer,TLV_INT,initLength+tlvSize);
 	  tlvSize += TLV_INT;
 
@@ -60,7 +56,7 @@ uint8_t BT_MC_generateSettingsMsg(machineSettingsTypeDef *m){
 }
 
 //FLYER
-uint8_t BT_MC_parse_Settings(machineSettingsTypeDef *mspBT){
+uint8_t BT_MC_parse_Settings(userSettings *uspBT){
 	//Buffer Rec index 10 onwards is TLVs till 10 + TlvsLength
 	TLVStruct_TypeDef T;
 	uint8_t TLV_start = 10;
@@ -73,44 +69,40 @@ uint8_t BT_MC_parse_Settings(machineSettingsTypeDef *mspBT){
     	TLV_start += tlvSize;
     	switch (T.type){
     		case DELIVERY_M_MIN_BT:
-    			mspBT->delivery_mMin = T.value_f;
+    			uspBT->delivery_mMin = T.value_f;
     			count += 1;
     			break;
-    		case DRAFT_BT:
-    			mspBT->draft = T.value_f;
+    		case CARD_FEED_RATIO_BT:
+    			uspBT->deliveryMtrMin_CardFeed_Ratio = T.value_f;
+    			count += 1;
+    			break;
+    		case LENGTH_LIMIT_BT:
+    			uspBT->lengthLimit = T.value_int;
     			count += 1;
     			break;
     		case CARDING_CYL_SPEED_BT:
-    			mspBT->cylinderSpeed = T.value_int;
+    			uspBT->cardCylRPM = T.value_int;
     			count += 1;
     			break;
     		case BEATER_CYL_SPEED_BT:
-    			mspBT->beaterSpeed = T.value_int;
+    			uspBT->btrCylRPM = T.value_int;
     			count += 1;
     			break;
-    		case CARDING_FEED_SPEED_BT:
-    			mspBT->cylinderFeed = T.value_f;
+    		case PICKER_CYL_SPEED_BT:
+    			uspBT->pickerCylRPM = T.value_int;
     			count += 1;
     			break;
     		case BEATER_FEED_SPEED_BT:
-    			mspBT->beaterFeed = T.value_f;
+    			uspBT->btrFeedRPM = T.value_int;
     			count += 1;
     			break;
-       		case TRUNK_DELAY_BT:
-				mspBT->trunkDelay = T.value_int;
+       		case AF_FEED_SPEED_BT:
+       			uspBT->AF_FeedRPM = T.value_int;
 				count += 1;
 				break;
-    		case LENGTH_LIMIT_BT:
-    			mspBT->lengthLimit = T.value_int;
-    			count += 1;
-    			break;
-    		case RAMPTIMES_BT:
-    			mspBT->rampTimes = T.value_int;
-    			count += 1;
-    			break;
     	}
     }
-    if (count == 9){
+    if (count == 8){
     	allSettingsRecieved = 1;
     }
 
@@ -118,34 +110,21 @@ uint8_t BT_MC_parse_Settings(machineSettingsTypeDef *mspBT){
 }
 
 //FLYER
-uint8_t BT_MC_Save_Settings(void){
+uint8_t BT_MC_Save_Settings(userSettings *u){
 	uint8_t fail;
-	fail = 0;//WriteMachineSettingsIntoEeprom(&msp_BT);
-	if (fail == 0){
-		msp.delivery_mMin = msp_BT.delivery_mMin;
-		//msp.draft = msp_BT.draft; //removed if we re using the TD pot
-		msp.cylinderSpeed = msp_BT.cylinderSpeed;
-		msp.cylinderFeed = msp_BT.cylinderFeed;
-		msp.beaterSpeed = msp_BT.beaterSpeed;
-		msp.beaterFeed = msp_BT.beaterFeed;
-		msp.trunkDelay = msp_BT.trunkDelay;
-		msp.lengthLimit = msp_BT.lengthLimit;
-		msp.rampTimes = msp_BT.rampTimes;
-		//send success msg to APP
-	}
+	fail = WriteUserSettingsIntoEeprom(u);
 	return !fail;
 }
 
-uint8_t BT_MC_Update_Settings(void){
-	msp.delivery_mMin = msp_BT.delivery_mMin;
-	//msp.draft = msp_BT.draft;
-	msp.cylinderSpeed = msp_BT.cylinderSpeed;
-	msp.cylinderFeed = msp_BT.cylinderFeed;
-	msp.beaterSpeed = msp_BT.beaterSpeed;
-	msp.beaterFeed = msp_BT.beaterFeed;
-	msp.trunkDelay = msp_BT.trunkDelay;
-	msp.lengthLimit = msp_BT.lengthLimit;
-	msp.rampTimes = msp_BT.rampTimes;
+uint8_t BT_MC_Update_Settings(userSettings *u,userSettings *uBT){
+	u->delivery_mMin = uBT->delivery_mMin;
+	u->deliveryMtrMin_CardFeed_Ratio = uBT->deliveryMtrMin_CardFeed_Ratio;
+	u->lengthLimit = uBT->lengthLimit;
+	u->cardCylRPM = uBT->cardCylRPM;
+	u->btrCylRPM = uBT->btrCylRPM;
+	u->pickerCylRPM = uBT->pickerCylRPM;
+	u->btrFeedRPM = uBT->btrFeedRPM;
+	u->AF_FeedRPM = uBT->AF_FeedRPM;
 	//send success msg to APP
 	return 1;
 }
@@ -163,6 +142,10 @@ uint8_t GetMotorID_from_BTMotor_ID(uint8_t BT_motorID){
 		return BEATER_FEED;
 	}else if (BT_motorID == BT_COILER){
 		return COILER;
+	}else if (BT_motorID == BT_PICKER_CYL){
+		return AF_PICKER_CYLINDER;
+	}else if (BT_motorID == BT_AF_FEED){
+		return AF_FEED;
 	}
 	return 0;
 }
@@ -180,6 +163,10 @@ uint8_t GetBTMotorID_from_Motor_ID(uint8_t motorID){
 		return BT_BEATER_FEED;
 	}else if (motorID == COILER){
 		return BT_COILER;
+	}else if (motorID == AF_PICKER_CYLINDER){
+		return BT_PICKER_CYL;
+	}else if (motorID == AF_FEED){
+		return BT_AF_FEED;
 	}
 	return 0;
 }
@@ -197,6 +184,10 @@ uint8_t GetMotorId_from_CarousalID(uint8_t carousalID){
 		return BEATER_FEED;
 	}else if (carousalID == BT_COILER){
 		return COILER;
+	}else if (carousalID == BT_PICKER_CYL){
+		return AF_PICKER_CYLINDER;
+	}else if (carousalID == BT_AF_FEED){
+		return AF_FEED;
 	}
 	return 99;
 }

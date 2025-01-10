@@ -84,24 +84,25 @@ typedef struct liveValuesType{
 
 typedef struct userSettingsType{
 	float delivery_mMin;
-	float lengthLimit;
+	uint16_t lengthLimit;
 
 	//----advanced-----
 	uint16_t cardCylRPM;
 	uint16_t btrCylRPM;
 	uint16_t pickerCylRPM;
-	float btrFeedRPM;
-	float AF_FeedRPM;
+	uint16_t btrFeedRPM;
+	uint16_t AF_FeedRPM;
 
 	float deliveryMtrMin_CardFeed_Ratio;
-
 }userSettings;
+
 
 typedef struct internalSettingsType{
 	uint16_t AF_ductSensorDelay;
 	uint16_t cardingDuctSensorTopDelay;
 	uint16_t cardingDuctSensorBtmDelay;
 	uint16_t piecingDeliveryMtrsMin;
+	uint16_t changeRPM_rampTimes;
 }internalSettings;
 
 typedef struct DuctType{
@@ -163,11 +164,6 @@ extern userSettings u;
 extern internalSettings I;
 extern CardingMc C;
 
-
-extern machineSettingsTypeDef msp;
-extern machineSettingsTypeDef ps;
-extern machineSettingsTypeDef msp_BT;
-
 // Eeprom MachineSettings
 void ReadUserSettingsFromEeprom(userSettings *u);
 uint8_t WriteUserSettingsIntoEeprom(userSettings *u);
@@ -180,6 +176,8 @@ void setupCardingMCType(CardingMc *c,userSettings *u);
 uint8_t CheckCylindersRampUpOver(CardingMc *c,ExtendedRunTime_TypeDef *cylinder,ExtendedRunTime_TypeDef *beater,RunTime_TypeDef *pickerCylinder);
 void updateCardingSectionSpeeds(CardingMc *c,userSettings *u);
 void updateFeedSectionSpeeds(CardingMc *c,userSettings *u);
+void updateCardingSectionPiecingSpeeds(CardingMc *c,userSettings *u,float piecingDeliveryMtr_Min);
+
 
 //coiler and potentiometer related functions
 //void updateCoilerParameters(machineSettingsTypeDef *ms,machineParamsTypeDef *m);

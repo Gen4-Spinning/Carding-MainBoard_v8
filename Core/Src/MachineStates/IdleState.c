@@ -109,7 +109,7 @@ void IdleState(void){
 			}
 			TD_calculate(&tdp);
 			if (tdp.tensionDraftChanged ==1){
-				msp.draft = tdp.tensionDraft;
+				C.tensionDraft = tdp.tensionDraft;
 				tdp.tensionDraftChanged  = 0;
 
 				//enable Beep Logic
