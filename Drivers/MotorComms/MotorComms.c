@@ -33,10 +33,13 @@ void ReadySetupCommand_AllMotors(CardingMc *C){
 		SU[i].RDT = CYLINDERS_RAMP_TIME_SEC;
 		SU[i].RUT = CYLINDERS_RAMP_TIME_SEC;
 	}
-	for (int i=2;i<8;i++){
+	for (int i=2;i<7;i++){
 		SU[i].RDT = NON_CYLINDER_RAMPDOWN_TIME_SEC;
 		SU[i].RUT = NON_CYLINDER_RAMPUP_TIME_SEC;
 	}
+	SU[AF_FEED].RDT = AF_FEED_RAMPDOWN_TIME_SEC;
+	SU[AF_FEED].RUT = AF_FEED_RAMPUP_TIME_SEC ;
+
 	//picker Cylinder
 	SU[AF_PICKER_CYLINDER].RDT = CYLINDERS_RAMP_TIME_SEC;
 	SU[AF_PICKER_CYLINDER].RUT = CYLINDERS_RAMP_TIME_SEC;
@@ -293,80 +296,20 @@ uint8_t SendChangeTargetToMultipleMotors(uint8_t *motorList,uint8_t motorArraySi
 }
 
 
-uint16_t updateBeaterFeedMotorRPM_BasedOnDuctLevel(CardingMc *c,uint16_t btrFeedRollerRPM){
-	if (c->D.cardFeed_ductLevel == DUCT_LEVEL_LOW){
-		c->R.btrFeedRPM = fmin(btrFeedRollerRPM + 2.0f,11.0f);
-	}else if (c->D.cardFeed_ductLevel == DUCT_LEVEL_CORRECT){
-		c->R.btrFeedRPM = btrFeedRollerRPM;
-	}
-	c->M.btrFeedMotorRPM = c->R.btrFeedRPM * BEATER_FEED_GB;
-	return c->M.btrFeedMotorRPM;
-}
-
-uint8_t btrCondition1 = 0,btrCondition2=0,btrCondition3=0,btrCondition4=0,btrCondition5=0;
-uint8_t sendCommandToBeaterFeedMotor(CardingMc *c,userSettings *u){
-	uint16_t beaterMotorRPM=0;
-	uint8_t response = 9;
-	uint8_t motors[] = {BEATER_FEED};
+uint8_t sendStartStopToAutoFeedMotor(CardingMc *c,uint8_t state){
+	uint8_t motors[] = {AF_FEED};
 	uint8_t noOfMotors = 1;
-
-
-	/* if duct is closed, when the duct level is normal or low, turn on the motors.
-	 * Else if the duct is open, if the duct is high stop everything.Else send a change target for a new speed based on
-	 * what the level is. Anyway this function is only called when there is a change in state.
-	 * Lastly if the duct state is reset.
-	 */
-	if (c->D.cardFeed_ductState_current == DUCT_CLOSED){
-		if ((c->D.cardFeed_ductLevel == DUCT_LEVEL_LOW) || (c->D.cardFeed_ductLevel == DUCT_LEVEL_CORRECT)){
-			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C,u->btrFeedRPM);
-			SU[BEATER_FEED].RPM = beaterMotorRPM;
-			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
-			btrCondition1+=1;
-			if (response == 1){
-				c->D.cardFeed_ductState_current = DUCT_OPEN;
-			}
-			return response;
-		}
+	uint8_t response = 0;
+	if (state == START){
+		response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
+	}else if (state == RAMPDOWN_STOP){
+		response = SendCommands_To_MultipleMotors(motors,noOfMotors,RAMPDOWN_STOP);
 	}
-	else if (c->D.cardFeed_ductState_current == DUCT_OPEN){
-		if (c->D.cardFeed_ductLevel == DUCT_LEVEL_HIGH){
-			response = SendCommands_To_MultipleMotors(motors,noOfMotors,RAMPDOWN_STOP);
-			if (response == 1){
-				c->D.cardFeed_ductState_current = DUCT_CLOSED;
-			}
-			btrCondition2+=1;
-			return response;
-		}
-		/*else{
-			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C,u->btrFeedRPM);
-			uint16_t targets[] = {beaterMotorRPM};
-			response = SendChangeTargetToMultipleMotors(motors,noOfMotors,targets);
-			if (response == 1){
-				c->D.cardFeed_ductState_current = DUCT_OPEN;
-			}
-			btrCondition3+=1;
-			return response;
-		}*/
-	}
-	else if (c->D.cardFeed_ductState_current == DUCT_RESET){ // only while starting
-		if ((c->D.cardFeed_ductLevel == DUCT_LEVEL_LOW) || (c->D.cardFeed_ductLevel == DUCT_LEVEL_CORRECT)){
-			beaterMotorRPM = updateBeaterFeedMotorRPM_BasedOnDuctLevel(&C,u->btrFeedRPM);
-			SU[BEATER_FEED].RPM = beaterMotorRPM;
-			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
-			if (response == 1){
-				c->D.cardFeed_ductState_current = DUCT_OPEN;
-			}
-			btrCondition4+=1;
-			return response;
-		}
-	}
-	btrCondition5+=1;
 	return response;
 }
 
-
-uint8_t sendStartStopToAutoFeedMotor(CardingMc *c,uint8_t state){
-	uint8_t motors[] = {AF_FEED};
+uint8_t sendStartStopToBeaterFeedMotor(CardingMc *c,uint8_t state){
+	uint8_t motors[] = {BEATER_FEED};
 	uint8_t noOfMotors = 1;
 	uint8_t response = 0;
 	if (state == START){

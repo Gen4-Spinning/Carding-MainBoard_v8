@@ -18,7 +18,7 @@
 
 #include "mcp23017.h"
 #include "AC_SSR.h"
-#include "TD_Pot.h"
+#include "../../Drivers/TensionDraft_Pot/TD_Pot.h"
 
 #include "MachineErrors.h"
 #include "BT_Fns.h"
@@ -26,7 +26,8 @@
 #include "BT_Console.h"
 
 #include "TowerLamp.h"
-#include "DataRequest.h"
+
+#include "../../../Drivers/DataRequest/DataRequest.h"
 
 uint8_t doActivity = 0 ;
 
@@ -67,7 +68,9 @@ uint8_t PID_DBG_MSG = 0;
 uint8_t PIDchk = 0;
 
 uint8_t updateSettingsDbg = 0;
-uint8_t cardTop=0,cardBtm=0,feedSensor = 0;
+uint8_t cardTop=0,feedSensor = 0;
+extern uint8_t msgSuccess
+;
 
 extern UART_HandleTypeDef huart1;
 extern ADC_HandleTypeDef hadc2;
@@ -192,10 +195,74 @@ void DebugState(void){
 
 		//Check duct Sensors:
 		cardTop = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
-		cardBtm = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_BTM_CARDFEED);
 		feedSensor = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
 
 
+		SensorCheckDeadTimeOver(&ductCardFeed);
+		if (ductCardFeed.deadTimeOn==0){
+			ductCardFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
+			ductCardFeed.ductStateChanged = SensorAppyHysteresis(&ductCardFeed);
+
+			if (ductCardFeed.ductStateChanged){
+				C.D.cardFeed_sensorState = ductCardFeed.presentState; // putting the sensor states in the C struct
+				if (S.runMode != RUN_RAMPUP){
+					if (C.D.cardFeed_sensorState == CARD_DUCT_SENSOR_OPEN){
+						msgSuccess = sendStartStopToBeaterFeedMotor(&C,START);
+						C.D.cardFeed_ductState_toApp = DUCT_OPEN; // this is the var that goes to the app
+						if (msgSuccess == 1){ // if success start the dead time calculation so that we dont send another command to the motor immediately
+							SensorStartDeadTime(&ductCardFeed);
+						}
+						else{ // if not success, reset the sensor state to that the msg can go again.
+							ductCardFeed.presentState = DUCT_SENSOR_RESET;
+						}
+					}
+					if (C.D.cardFeed_sensorState == CARD_DUCT_SENSOR_CLOSED){
+						msgSuccess = sendStartStopToBeaterFeedMotor(&C,RAMPDOWN_STOP);
+						C.D.cardFeed_ductState_toApp = DUCT_CLOSED; // this is the var that goes to the app
+						if (msgSuccess == 1){
+							SensorStartDeadTime(&ductCardFeed);
+						}
+						else{ // if not success, reset the sensor state to that the msg can go again.
+							ductCardFeed.presentState = DUCT_SENSOR_RESET;
+						}
+					}
+				}
+				ductCardFeed.ductStateChanged = 0;
+			}
+		} // closes deadTime
+
+
+		// check duct auto Feed Status. Status is set here, and used in the Run State blocks of code below.
+		SensorCheckDeadTimeOver(&ductAutoFeed);
+		if (ductAutoFeed.deadTimeOn==0){
+			ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
+			ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
+			if (ductAutoFeed.ductStateChanged){
+				C.D.autoFeed_sensorState = ductAutoFeed.presentState;
+				if (S.runMode != RUN_RAMPUP){
+					if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_OPEN){
+						C.D.autoFeed_ductState_toApp = DUCT_OPEN; // this is the var that goes to the app
+						msgSuccess = sendStartStopToAutoFeedMotor(&C,START);
+						if (msgSuccess == 1){
+							SensorStartDeadTime(&ductAutoFeed);
+						}
+						else{// if not success, reset the sensor state to that the msg can go again.
+							ductAutoFeed.presentState = DUCT_SENSOR_RESET;
+						}
+					}else if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_CLOSED){
+						C.D.autoFeed_ductState_toApp = DUCT_CLOSED; // app var
+						msgSuccess = sendStartStopToAutoFeedMotor(&C,RAMPDOWN_STOP);
+						if (msgSuccess == 1){
+							SensorStartDeadTime(&ductAutoFeed);
+						}
+						else{
+							ductAutoFeed.presentState = DUCT_SENSOR_RESET; // if not success, reset the sensor state to that the msg can go again.
+						}
+					}
+				}
+				ductAutoFeed.ductStateChanged = 0;
+			}
+		}//closes deadtime
 
 
 		if (testTowerLamp){

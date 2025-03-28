@@ -10,8 +10,12 @@
 #include "machineSettings.h"
 
 
-void setupSensorHysteresisTime(Sensor *s , uint16_t delayTime){
+void setupSensorHysteresisTime(Sensor *s , uint8_t delayTime){
 	s->hysteresisTime = delayTime;
+}
+
+void setupSensorDeadTime(Sensor *s,uint8_t deadTime){
+	s->deadTime = deadTime;
 }
 
 int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sensorVal,uint8_t sensor){
@@ -19,7 +23,7 @@ int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sen
 	sensorVal->raw = mcp->intTriggerCapturedValue[0];
 	if (sensor == DUCTSENSOR_TOP_CARDFEED){
 		return sensorVal->values.input0;
-	}else if (sensor == DUCTSENSOR_BTM_CARDFEED){
+	}else if (sensor == TG_OPTICAL_SENSOR){
 		return sensorVal->values.input1;
 	}else if (sensor == DUCTSENSOR_AF){
 		return sensorVal->values.input2;
@@ -27,6 +31,20 @@ int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sen
 	return -1;
 }
 
+
+void SensorStartDeadTime(Sensor *s){
+	s->ductSensorTimer = 0;
+	s->ductTimerIncrementBool = 1;
+	s->deadTimeOn = 1;
+}
+
+void SensorCheckDeadTimeOver(Sensor *s){
+	if (s->deadTimeOn==1){
+		if (s->ductSensorTimer >= s->deadTime ){
+			s->deadTimeOn = 0;
+		}
+	}
+}
 
 uint8_t SensorAppyHysteresis(Sensor *s){
 	// if sensor reading is different from the previous state.
@@ -52,18 +70,4 @@ uint8_t SensorAppyHysteresis(Sensor *s){
 		return 0;
 	}
 	return 0;
-}
-
-
-void processCardFeedDuctLevel(CardingMc *c){
-	if ((C.D.cardFeedTop_sensorState == DUCT_SENSOR_OPEN) && (C.D.cardFeedBtm_sensorState == DUCT_SENSOR_OPEN)){
-		c->D.cardFeed_ductLevel = DUCT_LEVEL_LOW;
-	}else if ((C.D.cardFeedTop_sensorState == DUCT_SENSOR_OPEN) && (C.D.cardFeedBtm_sensorState == DUCT_SENSOR_CLOSED)){
-		c->D.cardFeed_ductLevel = DUCT_LEVEL_CORRECT;
-	}else if ((C.D.cardFeedTop_sensorState == DUCT_SENSOR_CLOSED) && (C.D.cardFeedBtm_sensorState == DUCT_SENSOR_CLOSED)){
-		c->D.cardFeed_ductLevel = DUCT_LEVEL_HIGH;
-	}else{
-		//top closed but Btm open. MomentaryBlip while cotton is crossing or mistake. So we run fast
-		c->D.cardFeed_ductLevel = DUCT_LEVEL_LOW;
-	}
 }

@@ -21,7 +21,7 @@
 #include "SysObserver.h"
 #include "Log.h"
 #include "Ack.h"
-#include "DataRequest.h"
+#include "../../DataRequest/DataRequest.h"
 
 void FDCAN_sendCommand_ToMotor(uint8_t destination,uint8_t command);
 void FDCAN_sendSetUp_ToMotor(uint8_t destination, SetupMotor rd);

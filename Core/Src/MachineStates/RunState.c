@@ -45,7 +45,7 @@ void RunState(void){
 			//send the start commands
 			uint8_t motors[] = {CARDING_CYLINDER,BEATER_CYLINDER,AF_PICKER_CYLINDER};
 			noOfMotors = 3;
-			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
+			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);// TODO: every response has to be handled !!
 
 			S.runMode = RUN_RAMPUP;
 
@@ -58,65 +58,76 @@ void RunState(void){
 		}
 
 		/*---------------- Beater Feed and AF Feed Logic -----------------*/
-		ductCardFeedTop.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
-		ductCardFeedTop.ductStateChanged = SensorAppyHysteresis(&ductCardFeedTop);
 
-		ductCardFeedBtm.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_BTM_CARDFEED);
-		ductCardFeedBtm.ductStateChanged = SensorAppyHysteresis(&ductCardFeedBtm);
+//		tgCoiler.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,TG_OPTICAL_SENSOR);
+//		tgCoiler.ductStateChanged = SensorAppyHysteresis(&tgCoiler);
 
-		if ((ductCardFeedTop.ductStateChanged) || (ductCardFeedBtm.ductStateChanged)){
-			C.D.cardFeedTop_sensorState = ductCardFeedTop.presentState; // putting the sensor states in the C struct
-			C.D.cardFeedBtm_sensorState  = ductCardFeedBtm.presentState;
-			processCardFeedDuctLevel(&C);
-			if (S.runMode != RUN_RAMPUP){
-				msgSuccess = sendCommandToBeaterFeedMotor(&C,&u);
-				sentMsgToBtrFeed += 1;
-				if (msgSuccess == 1){
-					BtrFeedMsgSentSuccess += 1;
-				}else{
-					BtrFeedMsgSentFail += 1;
+
+		SensorCheckDeadTimeOver(&ductCardFeed);
+		if (ductCardFeed.deadTimeOn==0){
+			ductCardFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
+			ductCardFeed.ductStateChanged = SensorAppyHysteresis(&ductCardFeed);
+
+			if (ductCardFeed.ductStateChanged){
+				C.D.cardFeed_sensorState = ductCardFeed.presentState; // putting the sensor states in the C struct
+				if (S.runMode != RUN_RAMPUP){
+					if (C.D.cardFeed_sensorState == CARD_DUCT_SENSOR_OPEN){
+						msgSuccess = sendStartStopToBeaterFeedMotor(&C,START);
+						C.D.cardFeed_ductState_toApp = DUCT_OPEN; // this is the var that goes to the app
+						if (msgSuccess == 1){ // if success start the dead time calculation so that we dont send another command to the motor immediately
+							SensorStartDeadTime(&ductCardFeed);
+						}
+						else{ // if not success, reset the sensor state to that the msg can go again.
+							ductCardFeed.presentState = DUCT_SENSOR_RESET;
+						}
+					}
+					if (C.D.cardFeed_sensorState == CARD_DUCT_SENSOR_CLOSED){
+						msgSuccess = sendStartStopToBeaterFeedMotor(&C,RAMPDOWN_STOP);
+						C.D.cardFeed_ductState_toApp = DUCT_CLOSED; // this is the var that goes to the app
+						if (msgSuccess == 1){// if success start the dead time calculation so that we dont send another command to the motor immediately
+							SensorStartDeadTime(&ductCardFeed);
+						}
+						else{ // if not success, reset the sensor state to that the msg can go again.
+							ductCardFeed.presentState = DUCT_SENSOR_RESET;
+						}
+					}
 				}
-
+				ductCardFeed.ductStateChanged = 0;
 			}
-			ductCardFeedTop.ductStateChanged = 0;
-			ductCardFeedBtm.ductStateChanged = 0;
-		}
+		} // closes deadTime
 
 		// check duct auto Feed Status. Status is set here, and used in the Run State blocks of code below.
-		ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
-		ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
-		if (ductAutoFeed.ductStateChanged){
-			uint8_t autoFeedCommand = 0;
-			C.D.autoFeed_sensorState = ductAutoFeed.presentState;
-			if (S.runMode != RUN_RAMPUP){
-				if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_OPEN){
-					C.D.autoFeed_ductState_current = DUCT_OPEN;
-					autoFeedCommand = START;
-				}else if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_CLOSED){
-					C.D.autoFeed_ductState_current = DUCT_CLOSED;
-					autoFeedCommand = RAMPDOWN_STOP;
+		SensorCheckDeadTimeOver(&ductAutoFeed);
+		if (ductAutoFeed.deadTimeOn==0){
+			ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
+			ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
+			if (ductAutoFeed.ductStateChanged){
+				C.D.autoFeed_sensorState = ductAutoFeed.presentState;
+				if (S.runMode != RUN_RAMPUP){
+					if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_OPEN){
+						C.D.autoFeed_ductState_toApp = DUCT_OPEN; // this is the var that goes to the app
+						msgSuccess = sendStartStopToAutoFeedMotor(&C,START);
+						if (msgSuccess == 1){
+							SensorStartDeadTime(&ductAutoFeed);
+						}
+						else{// if not success, reset the sensor state to that the msg can go again.
+							ductAutoFeed.presentState = DUCT_SENSOR_RESET;
+						}
+					}else if (C.D.autoFeed_sensorState == AFDUCT_SENSOR_CLOSED){
+						C.D.autoFeed_ductState_toApp = DUCT_CLOSED; // app var
+						msgSuccess = sendStartStopToAutoFeedMotor(&C,RAMPDOWN_STOP);
+						if (msgSuccess == 1){
+							SensorStartDeadTime(&ductAutoFeed);
+						}
+						else{
+							ductAutoFeed.presentState = DUCT_SENSOR_RESET; // if not success, reset the sensor state to that the msg can go again.
+						}
+					}
 				}
-				sendStartStopToAutoFeedMotor(&C,autoFeedCommand);
+				ductAutoFeed.ductStateChanged = 0;
 			}
-			ductAutoFeed.ductStateChanged = 0;
-		}
+		}//closes deadtime
 
-
-		/*if (startBtrFeed){
-			beaterMotorRPM1 = u.btrFeedRPM* BEATER_FEED_GB;;
-			SU[BEATER_FEED].RPM = beaterMotorRPM1;
-			uint8_t motors[] = {BEATER_FEED};
-			uint8_t noOfMotors = 1;
-			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
-			startBtrFeed = 0;
-		}
-
-		if(stopBtrFeed){
-			uint8_t motors[] = {BEATER_FEED};
-			uint8_t noOfMotors = 1;
-			response = SendCommands_To_MultipleMotors(motors,noOfMotors,RAMPDOWN_STOP);
-			stopBtrFeed = 0;
-		}*/
 
 		/*----------------Ending Beater Feed and AF Feed Logic -----------------*/
 
@@ -127,14 +138,13 @@ void RunState(void){
 			if (C.L.stateMc_rampOver == 1){
 				S.runMode = RUN_FILL_DUCT;
 				//force the cardFeed section above to check the duct state by setting present state to not what it currently is
-				ductCardFeedTop.presentState = DUCT_SENSOR_RESET;
-				ductCardFeedBtm.presentState = DUCT_SENSOR_RESET;
+				ductCardFeed.presentState = DUCT_SENSOR_RESET;
 				ductAutoFeed.presentState = DUCT_SENSOR_RESET;
 			}
 		}
 
 		if (S.runMode == RUN_FILL_DUCT){
-			if (C.D.cardFeed_ductLevel == DUCT_LEVEL_HIGH){
+			if (C.D.cardFeed_sensorState == CARD_DUCT_SENSOR_CLOSED){
 				if (usrBtns.rotarySwitch == ROTARY_SWITCH_ON){
 					S.piecingMode = 1;
 					updateCardingSectionPiecingSpeeds(&C,&u,I.piecingDeliveryMtrsMin);
@@ -186,16 +196,7 @@ void RunState(void){
 			}
 		}
 
-		/*if ((S.runMode == RUN_FILL_DUCT) || (S.runMode == RUN_CARDING_SECTION)){
-			if ((usrBtns.rotarySwitch == ROTARY_SWITCH_ON)&&((C.D.autoFeed_ductState_current==DUCT_CLOSED)||(C.D.autoFeed_ductState_current==DUCT_RESET))){
-				C.D.autoFeed_ductState_current = DUCT_OPEN;
-				sendStartStopToAutoFeedMotor(&C,START);
-			}
-			if ((usrBtns.rotarySwitch == ROTARY_SWITCH_OFF)&&((C.D.autoFeed_ductState_current==DUCT_OPEN)||(C.D.autoFeed_ductState_current==DUCT_RESET))){
-				C.D.autoFeed_ductState_current = DUCT_CLOSED;
-				sendStartStopToAutoFeedMotor(&C,RAMPDOWN_STOP);
-			}
-		}*/
+
 
 		/*if settings modified through app for carding:
 		 * update the settings whatever the state(pause/rampup/fill or normal). But onyl send the change
@@ -328,7 +329,6 @@ void RunState(void){
 			S.TD_POT_check = 0;
 		}
 
-
 		// stop btn
 		if (usrBtns.redBtn == BTN_PRESSED){
 			usrBtns.redBtn = BTN_IDLE;
@@ -347,8 +347,6 @@ void RunState(void){
 			ChangeState(&S,IDLE_STATE);
 			break;
 		}
-
-
 
 	}//closes while
 

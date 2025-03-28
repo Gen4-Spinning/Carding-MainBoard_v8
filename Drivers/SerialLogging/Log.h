@@ -14,7 +14,7 @@
 #include "main.h"
 #include "machineSettings.h"
 #include "MachineSensors.h"
-#include "TD_Pot.h"
+//#include "TD_Pot.h"
 
 extern UART_HandleTypeDef huart2;
 extern char LogBuffer[2048];

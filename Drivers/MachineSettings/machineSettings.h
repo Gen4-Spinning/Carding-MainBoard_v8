@@ -47,6 +47,9 @@
 #define NON_CYLINDER_RAMPUP_TIME_SEC 3
 #define NON_CYLINDER_RAMPDOWN_TIME_SEC 2
 
+#define AF_FEED_RAMPUP_TIME_SEC 3
+#define AF_FEED_RAMPDOWN_TIME_SEC 3
+
 typedef struct rollerRPMsType{
 	float cardFeedRPM;
 	float btrFeedRPM;
@@ -100,19 +103,19 @@ typedef struct userSettingsType{
 typedef struct internalSettingsType{
 	uint16_t AF_ductSensorDelay;
 	uint16_t cardingDuctSensorTopDelay;
-	uint16_t cardingDuctSensorBtmDelay;
+	uint8_t AF_ductSensorDeadTime;
+	uint8_t cardingDuctSensorDeadTime;
 	uint16_t piecingDeliveryMtrsMin;
 	uint16_t changeRPM_rampTimes;
 }internalSettings;
 
 typedef struct DuctType{
 	uint16_t autoFeed_sensorState;
-	uint16_t cardFeedTop_sensorState;
-	uint16_t cardFeedBtm_sensorState;
-	uint8_t cardFeed_ductLevel;
+	uint16_t cardFeed_sensorState;
 
-	uint8_t cardFeed_ductState_current;
-	uint8_t autoFeed_ductState_current;
+	uint8_t autoFeed_ductState_toApp;
+	uint8_t cardFeed_ductState_toApp;
+
 }ducts;
 
 typedef struct cardingMC_Full{

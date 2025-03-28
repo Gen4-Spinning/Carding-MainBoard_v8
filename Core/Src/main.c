@@ -48,8 +48,9 @@
 
 #include "MB_LEDs.h"
 #include "AC_SSR.h"
+
+#include "../../Drivers/DataRequest/DataRequest.h"
 #include "TD_Pot.h"
-#include "DataRequest.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,9 +93,9 @@ userSettings u;
 userSettings uBT; // userSettingsBT
 internalSettings I;
 CardingMc C;
-Sensor ductCardFeedTop;
-Sensor ductCardFeedBtm;
+Sensor ductCardFeed;
 Sensor ductAutoFeed;
+Sensor tgCoiler;
 
 
 machineSettingsTypeDef ps; // piecing settings
@@ -202,7 +203,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  S.BT_sendState = 1;
 		  S.TD_POT_check = 1;
 		  if (S.runMode== RUN_CARDING_SECTION){
-			  mcParams.currentMtrsRun += msp.delivery_mMin/60.0 * 0.5;
+			  C.L.currentMtrsRun += C.cardingDelivery_mtrMin/60.0 * 0.5;
 		  }
 	  }
 
@@ -213,11 +214,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		  if(DR.requestSent){
 			  DR.timer++;
 		  }
-		  if (ductCardFeedTop.ductTimerIncrementBool){
-			  ductCardFeedTop.ductSensorTimer++;
-		  }
-		  if (ductCardFeedBtm.ductTimerIncrementBool){
-			  ductCardFeedBtm.ductSensorTimer++;
+		  if (ductCardFeed.ductTimerIncrementBool){
+			  ductCardFeed.ductSensorTimer++;
 		  }
 		  if (ductAutoFeed.ductTimerIncrementBool){
 			  ductAutoFeed.ductSensorTimer++;
@@ -379,25 +377,21 @@ int main(void)
   }
 
   //at startup set the hysteresis times for each sensor and then set the current state for the sensors and for the duct also
-  setupSensorHysteresisTime(&ductCardFeedTop,I.cardingDuctSensorTopDelay);
-  ductCardFeedTop.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
-  ductCardFeedTop.presentState = ductCardFeedTop.currentReading ;
-  C.D.cardFeedTop_sensorState = ductCardFeedTop.presentState;
-
-  setupSensorHysteresisTime(&ductCardFeedBtm,I.cardingDuctSensorBtmDelay);
-  ductCardFeedBtm.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_BTM_CARDFEED);
-  ductCardFeedBtm.presentState = ductCardFeedBtm.currentReading ;
-  C.D.cardFeedBtm_sensorState = ductCardFeedBtm.presentState;
-
-  processCardFeedDuctLevel(&C); //set the duct state
-  C.D.cardFeed_ductState_current = DUCT_RESET;
+  setupSensorHysteresisTime(&ductCardFeed,I.cardingDuctSensorTopDelay);
+  setupSensorDeadTime(&ductCardFeed,I.cardingDuctSensorDeadTime);
+  ductCardFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
+  ductCardFeed.presentState = ductCardFeed.currentReading ;
+  C.D.cardFeed_sensorState = ductCardFeed.presentState;
+  C.D.cardFeed_ductState_toApp = DUCT_RESET;
 
   setupSensorHysteresisTime(&ductAutoFeed,I.AF_ductSensorDelay);
+  setupSensorDeadTime(&ductAutoFeed,I.AF_ductSensorDeadTime);
   ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
   ductAutoFeed.presentState = ductAutoFeed.currentReading ;
   C.D.autoFeed_sensorState = ductAutoFeed.presentState;
-  C.D.autoFeed_ductState_current = DUCT_RESET;
+  C.D.autoFeed_ductState_toApp = DUCT_RESET;
 
+  setupSensorHysteresisTime(&tgCoiler,2);
 
   //------ Done ---
 

@@ -11,9 +11,10 @@
 void InitInternalSettings(internalSettings *i){
 	i->AF_ductSensorDelay = 2;
 	i->cardingDuctSensorTopDelay= 2;
-	i->cardingDuctSensorBtmDelay= 2;
+	i->cardingDuctSensorDeadTime=3; //ideally has to be more than the time taken to rampDown or rampUp the cardFeed motor
+	i->AF_ductSensorDeadTime= 4; // has to be more than the time taken to rampDown or up the AF feed motor
 	i->piecingDeliveryMtrsMin = 3;
-	i->changeRPM_rampTimes = 2;
+	i->changeRPM_rampTimes = 2; // only carding zone motors
 }
 
 void setupCardingMCType(CardingMc *c,userSettings *u){
@@ -37,7 +38,7 @@ void setupCardingMCType(CardingMc *c,userSettings *u){
 	if (c->R.btrFeedRPM < 0.2){c->R.btrFeedRPM = 0.2;}
 	c->M.btrFeedMotorRPM = c->R.btrFeedRPM * BEATER_FEED_GB;
 
-	c->R.pickerFeedRPM = u->AF_FeedRPM*2;
+	c->R.pickerFeedRPM = u->AF_FeedRPM;
 	if (c->R.pickerFeedRPM > 8){c->R.pickerFeedRPM = 8;}
 	if (c->R.pickerFeedRPM < 0.2){c->R.pickerFeedRPM = 0.2;}
 	c->M.afFeedMotorRPM = c->R.pickerFeedRPM * AF_FEED_GB;

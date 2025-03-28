@@ -5,7 +5,7 @@
  *      Author: harsha
  */
 
-#include "DataRequest.h"
+#include "../DataRequest/DataRequest.h"
 
 void SendDataRequest(DataReq *d,uint8_t requestType,uint8_t motorName){
 	uint8_t motorCANID;
