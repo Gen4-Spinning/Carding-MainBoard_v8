@@ -16,11 +16,12 @@
 #define TG_OPTICAL_SENSOR 2
 #define DUCTSENSOR_AF 3
 
+
 #define AFDUCT_SENSOR_OPEN 0
 #define AFDUCT_SENSOR_CLOSED 1
 
-#define CARD_DUCT_SENSOR_OPEN 1
-#define CARD_DUCT_SENSOR_CLOSED 0
+#define CARD_DUCT_SENSOR_OPEN 0
+#define CARD_DUCT_SENSOR_CLOSED 1
 #define DUCT_SENSOR_RESET 2
 
 #define DUCT_OPEN 1
@@ -48,7 +49,7 @@ extern Sensor tgCoiler;
 
 
 int8_t Sensor_ReadValueDirectly(MCP23017_HandleTypeDef *mcp, MCP23017_PortB *sensorVal,uint8_t sensor);
-uint8_t SensorAppyHysteresis(Sensor *s);
+uint8_t SensorApplyHysteresis(Sensor *s);
 
 void setupSensorHysteresisTime(Sensor *s , uint8_t delayTime);
 void setupSensorDeadTime(Sensor *s,uint8_t deadTime);

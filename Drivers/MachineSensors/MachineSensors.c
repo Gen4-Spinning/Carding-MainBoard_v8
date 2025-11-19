@@ -46,7 +46,7 @@ void SensorCheckDeadTimeOver(Sensor *s){
 	}
 }
 
-uint8_t SensorAppyHysteresis(Sensor *s){
+uint8_t SensorApplyHysteresis(Sensor *s){
 	// if sensor reading is different from the previous state.
 	if (s->currentReading != s->presentState){
 		if (s->ductTimerIncrementBool == 0){

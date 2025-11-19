@@ -40,7 +40,7 @@ uint8_t CheckUserSettings(userSettings* u){
 	if ((u->pickerCylRPM > 650) || (u->pickerCylRPM < 300)){
 		return 0;
 	}
-	if ((u->deliveryMtrMin_CardFeed_Ratio < 3.0f) || (u->deliveryMtrMin_CardFeed_Ratio > 10.0f)){
+	if ((u->deliveryMtrMin_CardFeed_Ratio < 0.4f) || (u->deliveryMtrMin_CardFeed_Ratio > 10.0f)){//prev min is 3
 			return 0;
 	}
 	if ((u->btrFeedRPM > 11.0f) || (u->btrFeedRPM < 0.1f)){

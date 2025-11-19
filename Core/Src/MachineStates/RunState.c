@@ -66,7 +66,7 @@ void RunState(void){
 		SensorCheckDeadTimeOver(&ductCardFeed);
 		if (ductCardFeed.deadTimeOn==0){
 			ductCardFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
-			ductCardFeed.ductStateChanged = SensorAppyHysteresis(&ductCardFeed);
+			ductCardFeed.ductStateChanged = SensorApplyHysteresis(&ductCardFeed);
 
 			if (ductCardFeed.ductStateChanged){
 				C.D.cardFeed_sensorState = ductCardFeed.presentState; // putting the sensor states in the C struct
@@ -100,7 +100,7 @@ void RunState(void){
 		SensorCheckDeadTimeOver(&ductAutoFeed);
 		if (ductAutoFeed.deadTimeOn==0){
 			ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
-			ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
+			ductAutoFeed.ductStateChanged = SensorApplyHysteresis(&ductAutoFeed);
 			if (ductAutoFeed.ductStateChanged){
 				C.D.autoFeed_sensorState = ductAutoFeed.presentState;
 				if (S.runMode != RUN_RAMPUP){
@@ -199,7 +199,7 @@ void RunState(void){
 
 
 		/*if settings modified through app for carding:
-		 * update the settings whatever the state(pause/rampup/fill or normal). But onyl send the change
+		 * update the settings whatever the state(pause/rampup/fill or normal). But only send the change
 		 * target during the normal mode , when we re not in piecing.
 		 * but if in pause or rampup mode since the motors are not in run state,
 		 * sending a change target wont do anything. Instead when we come out of

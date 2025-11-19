@@ -201,7 +201,7 @@ void DebugState(void){
 		SensorCheckDeadTimeOver(&ductCardFeed);
 		if (ductCardFeed.deadTimeOn==0){
 			ductCardFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_TOP_CARDFEED);
-			ductCardFeed.ductStateChanged = SensorAppyHysteresis(&ductCardFeed);
+			ductCardFeed.ductStateChanged = SensorApplyHysteresis(&ductCardFeed);
 
 			if (ductCardFeed.ductStateChanged){
 				C.D.cardFeed_sensorState = ductCardFeed.presentState; // putting the sensor states in the C struct
@@ -236,7 +236,7 @@ void DebugState(void){
 		SensorCheckDeadTimeOver(&ductAutoFeed);
 		if (ductAutoFeed.deadTimeOn==0){
 			ductAutoFeed.currentReading = Sensor_ReadValueDirectly(&hmcp,&mcp_portB_sensorVal,DUCTSENSOR_AF);
-			ductAutoFeed.ductStateChanged = SensorAppyHysteresis(&ductAutoFeed);
+			ductAutoFeed.ductStateChanged = SensorApplyHysteresis(&ductAutoFeed);
 			if (ductAutoFeed.ductStateChanged){
 				C.D.autoFeed_sensorState = ductAutoFeed.presentState;
 				if (S.runMode != RUN_RAMPUP){
