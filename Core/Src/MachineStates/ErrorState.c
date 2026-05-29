@@ -76,21 +76,23 @@ void ErrorState(void){
 				SetBTErrors(&ME,ME.errReason1,errSource,ME.errCode1);
 
 			}else if (ME.errType1 == ERR_MOTOR_SOURCE){
-				//send the Stop commands
-				uint8_t motors[] = {CARDING_CYLINDER,BEATER_CYLINDER,CARDING_FEED,BEATER_FEED,CAGE,COILER};
-				noOfMotors = 6;
-				SendCommands_To_MultipleMotors(motors,noOfMotors,EMERGENCY_STOP);
+				/* FIX: Added AF_FEED and AF_PICKER_CYLINDER to stop list */
+				uint8_t motors[] = {CARDING_CYLINDER, BEATER_CYLINDER, CARDING_FEED,
+				                    BEATER_FEED, CAGE, COILER, AF_FEED, AF_PICKER_CYLINDER};
+				noOfMotors = 8;
+				SendCommands_To_MultipleMotors(motors, noOfMotors, EMERGENCY_STOP);
 
 				BTmotorID = GetBTMotorID_from_Motor_ID(ME.errSource1);
-				SetBTErrors(&ME,ME.errReason1,BTmotorID,ME.errCode1);
+				SetBTErrors(&ME, ME.errReason1, BTmotorID, ME.errCode1);
 			}else if (ME.errType2 == ERR_MOTOR_SOURCE){
-				//send the Stop commands
-				uint8_t motors[] = {CARDING_CYLINDER,BEATER_CYLINDER,CARDING_FEED,BEATER_FEED,CAGE,COILER};
-				noOfMotors = 3;
-				SendCommands_To_MultipleMotors(motors,noOfMotors,EMERGENCY_STOP);
+				/* FIX: Added AF_FEED and AF_PICKER_CYLINDER to stop list */
+				uint8_t motors[] = {CARDING_CYLINDER, BEATER_CYLINDER, CARDING_FEED,
+				                    BEATER_FEED, CAGE, COILER, AF_FEED, AF_PICKER_CYLINDER};
+				noOfMotors = 8;
+				SendCommands_To_MultipleMotors(motors, noOfMotors, EMERGENCY_STOP);
 
 				BTmotorID = GetBTMotorID_from_Motor_ID(ME.errSource2);
-				SetBTErrors(&ME,ME.errReason2,BTmotorID,ME.errCode2);
+				SetBTErrors(&ME, ME.errReason2, BTmotorID, ME.errCode2);
 			}
 			TowerLamp_SetState(&hmcp, &mcp_portB,BUZZER_OFF,RED_ON,GREEN_OFF,AMBER_OFF);
 			TowerLamp_ApplyState(&hmcp,&mcp_portB);
@@ -126,4 +128,3 @@ void ErrorState(void){
 	}//closes while
 
 }
-

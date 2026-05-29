@@ -95,9 +95,9 @@ void IdleState(void){
 		}
 
 		//in idle only the state change gets logged. no motor running
-		/*if (S.LOG_enabled){
-			Log_DoOneCycle();
-		}*/
+//		if (S.LOG_enabled){
+//			Log_DoOneCycle();
+//		}
 
 		//update the draft in IDLE also, can be used to see the limits also
 		//by changing the delivery mts min from the app.

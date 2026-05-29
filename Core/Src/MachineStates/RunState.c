@@ -47,6 +47,16 @@ void RunState(void){
 			noOfMotors = 3;
 			response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);// TODO: every response has to be handled !!
 
+			// Set up logging for the 6 motors that use R[] (cylinders use ER[], cannot use same logger)
+			uint8_t logMotors[] = {CAGE, CARDING_FEED, BEATER_FEED,
+			                       COILER, AF_PICKER_CYLINDER, AF_FEED};
+			Log_setUpLogging(&L, logMotors, 6);
+			Log_setUpCylinderLogging(&L);  // enable ER[] logging for CARDING + BEATER cylinders
+			Log_ResetBufferIndex(&L);
+			S.LOG_enabled = 1;      // always ON - no BT toggle needed
+			L.logRunStateChange = 1;
+			L.flushBuffer = 0;
+
 			S.runMode = RUN_RAMPUP;
 
 			//when u start your in the run mode
@@ -209,6 +219,7 @@ void RunState(void){
 		 */
 		if (S.settingsModified){
 			updateCardingSectionSpeeds(&C,&u);
+			updateFeedSectionSpeeds(&C,&u);
 			if ((S.runMode == RUN_CARDING_SECTION)&&(S.piecingMode==0)){
 					uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
 					uint16_t targets[] = {C.M.cardFeedMotorRPM,C.M.cageMotorRPM,C.M.coilerMotorRPM};
@@ -258,7 +269,7 @@ void RunState(void){
 				}
 				ReadySetupRPMCommand_CardingMotors(&C);
 				uint8_t motors[] = {CARDING_FEED,CAGE,COILER};
-				noOfMotors =3;
+				noOfMotors = 3;
 				response = SendCommands_To_MultipleMotors(motors,noOfMotors,START);
 
 				S.runMode = RUN_CARDING_SECTION;
@@ -278,6 +289,10 @@ void RunState(void){
 		if (S.oneSecTimer != currentTime){
 			C.L.mcPower = ER[0].power + ER[1].power + R[2].power + R[3].power + R[4].power + R[5].power + R[6].power+ R[7].power;
 			currentTime = S.oneSecTimer;
+			// Flush log buffer every second so data appears even if buffer not full
+			if (S.LOG_enabled && L.bufferIdx > 0){
+				L.flushBuffer = 1;
+			}
 		}
 
 		//--------sending BT info--------
@@ -329,6 +344,8 @@ void RunState(void){
 			S.TD_POT_check = 0;
 		}
 
+
+
 		// stop btn
 		if (usrBtns.redBtn == BTN_PRESSED){
 			usrBtns.redBtn = BTN_IDLE;
@@ -344,11 +361,25 @@ void RunState(void){
 			TowerLamp_ApplyState(&hmcp,&mcp_portB);
 			HAL_Delay(1000); // to hear the beep
 
+			Log_disableLogging(&L);
+			S.LOG_enabled = 0;
 			ChangeState(&S,IDLE_STATE);
 			break;
 		}
+//		if(ME.ErrorFlag == 1){
+//				Log_disableLogging(&L);
+//				S.LOG_enabled = 0;
+//				ChangeState(&S,ERROR_STATE); //AF feed motor not going to error state
+	//	TODO the beater feed some times rotating even the duct fill need to double verify that
+		//beater feed going to tracking error when we change the setting
+
+//				break;
+//						}
+		if (S.LOG_enabled){
+			Log_DoOneCycle();
+					}
+
 
 	}//closes while
 
 }
-

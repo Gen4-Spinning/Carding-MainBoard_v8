@@ -47,7 +47,8 @@ typedef struct MotorRunTimeStruct
 }RunTime_TypeDef;
 
 typedef struct ExtendedMotorRunTimeStruct
-{	int16_t actualRPM;
+{	uint16_t rdngNo;
+	int16_t actualRPM;
 	int16_t targetRPM;
 	uint16_t busVoltage;
 	int16_t idaxis;

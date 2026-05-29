@@ -28,7 +28,8 @@ void setupCardingMCType(CardingMc *c,userSettings *u){
 	c->M.btrCylMotorRPM = u->btrCylRPM/CYLINDER_GEAR_RATIO;
 	c->M.pickerCylMotorRPM = u->pickerCylRPM/AF_PICKER_CYL_GEAR_RATIO;
 
-	c->R.cardFeedRPM = u->delivery_mMin/u->deliveryMtrMin_CardFeed_Ratio;
+	//c->R.cardFeedRPM = u->delivery_mMin/u->deliveryMtrMin_CardFeed_Ratio;
+	c->R.cardFeedRPM = u->deliveryMtrMin_CardFeed_Ratio;
 	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
 	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}
 	c->M.cardFeedMotorRPM = c->R.cardFeedRPM * CYLINDER_FEED_GB;
@@ -56,7 +57,8 @@ void setupCardingMCType(CardingMc *c,userSettings *u){
 
 void updateCardingSectionSpeeds(CardingMc *c,userSettings *u){
 	c->cardingDelivery_mtrMin = u->delivery_mMin;
-	c->R.cardFeedRPM = c->cardingDelivery_mtrMin/u->deliveryMtrMin_CardFeed_Ratio;
+	//c->R.cardFeedRPM = c->cardingDelivery_mtrMin/u->deliveryMtrMin_CardFeed_Ratio;
+	c->R.cardFeedRPM = u->deliveryMtrMin_CardFeed_Ratio;
 	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
 	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}
 	c->M.cardFeedMotorRPM = c->R.cardFeedRPM * CYLINDER_FEED_GB;

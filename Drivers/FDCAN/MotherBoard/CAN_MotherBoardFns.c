@@ -192,6 +192,7 @@ void FDCAN_Recieve_ExtendedRunDataFromCylinderMotors(uint8_t motorID)
 {
 	//0 has carding cylinder, 1 has beater cylinder data
 
+	ER[motorID].rdngNo++;
 	ER[motorID].actualRPM=(RxData[0]<< 8 ) | RxData[1];
 	ER[motorID].targetRPM=(RxData[2]<< 8 ) | RxData[3];
 	ER[motorID].busVoltage=(RxData[4]<< 8 ) | RxData[5];

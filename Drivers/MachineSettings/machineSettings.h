@@ -28,7 +28,7 @@
 #define TONGUE_GROOVE_CIRCUMFERENCE_MM 213.63
 #define TG_TO_GB_RATIO 1
 
-#define CAGE_CIRCUMFERENCE_MM	468.0973
+#define CAGE_CIRCUMFERENCE_MM	942.5 //468.0973 previous
 #define CAGE_TO_GB_RATIO 2.6389
 #define CAGE_GB 5
 
@@ -57,6 +57,8 @@ typedef struct rollerRPMsType{
 	float TgRPM;
 	float cageRPM;
 	float coilerGBShaftRPM;
+
+	float Hardcoded_cardFeedRPM;
 }rollerRPMs;
 
 typedef struct motorRPMsType{
@@ -97,6 +99,7 @@ typedef struct userSettingsType{
 	uint16_t AF_FeedRPM;
 
 	float deliveryMtrMin_CardFeed_Ratio;
+	float btrFeed_CardFeed_Ratio;  // e.g., 1.0 means btrFeed = 1x cardFeedRPM
 }userSettings;
 
 
