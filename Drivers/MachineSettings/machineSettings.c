@@ -30,11 +30,11 @@ void setupCardingMCType(CardingMc *c,userSettings *u){
 
 	//c->R.cardFeedRPM = u->delivery_mMin/u->deliveryMtrMin_CardFeed_Ratio;
 	c->R.cardFeedRPM = u->deliveryMtrMin_CardFeed_Ratio;
-	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
+	if (c->R.cardFeedRPM > 20){c->R.cardFeedRPM = 20;}
 	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}
 	c->M.cardFeedMotorRPM = c->R.cardFeedRPM * CYLINDER_FEED_GB;
 
-	c->R.btrFeedRPM = u->btrFeedRPM;
+	c->R.btrFeedRPM = u->btrFeedRPM;//u->btrFeedRPM
 	if (c->R.btrFeedRPM > 11){c->R.btrFeedRPM = 11;}
 	if (c->R.btrFeedRPM < 0.2){c->R.btrFeedRPM = 0.2;}
 	c->M.btrFeedMotorRPM = c->R.btrFeedRPM * BEATER_FEED_GB;
@@ -59,7 +59,7 @@ void updateCardingSectionSpeeds(CardingMc *c,userSettings *u){
 	c->cardingDelivery_mtrMin = u->delivery_mMin;
 	//c->R.cardFeedRPM = c->cardingDelivery_mtrMin/u->deliveryMtrMin_CardFeed_Ratio;
 	c->R.cardFeedRPM = u->deliveryMtrMin_CardFeed_Ratio;
-	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
+	if (c->R.cardFeedRPM > 20){c->R.cardFeedRPM = 20;}
 	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}
 	c->M.cardFeedMotorRPM = c->R.cardFeedRPM * CYLINDER_FEED_GB;
 
@@ -76,8 +76,8 @@ void updateCardingSectionSpeeds(CardingMc *c,userSettings *u){
 
 void updateCardingSectionPiecingSpeeds(CardingMc *c,userSettings *u,float piecingDeliveryMtr_Min){
 	c->cardingDelivery_mtrMin = piecingDeliveryMtr_Min;
-	c->R.cardFeedRPM = c->cardingDelivery_mtrMin/u->deliveryMtrMin_CardFeed_Ratio;
-	if (c->R.cardFeedRPM > 11){c->R.cardFeedRPM = 11;}
+	c->R.cardFeedRPM = u->deliveryMtrMin_CardFeed_Ratio;
+	if (c->R.cardFeedRPM > 20){c->R.cardFeedRPM = 20;}
 	if (c->R.cardFeedRPM < 0.2){c->R.cardFeedRPM = 0.2;}
 	c->M.cardFeedMotorRPM = c->R.cardFeedRPM * CYLINDER_FEED_GB;
 
@@ -93,6 +93,7 @@ void updateCardingSectionPiecingSpeeds(CardingMc *c,userSettings *u,float piecin
 }
 
 void updateFeedSectionSpeeds(CardingMc *c,userSettings *u){
+
 	c->R.btrFeedRPM = u->btrFeedRPM;
 	if (c->R.btrFeedRPM > 11){c->R.btrFeedRPM = 11;}
 	if (c->R.btrFeedRPM < 0.2){c->R.btrFeedRPM = 0.2;}
